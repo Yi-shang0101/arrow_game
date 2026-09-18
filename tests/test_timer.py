@@ -58,7 +58,8 @@ class TimerTests(unittest.TestCase):
     def test_third_level_animation_budget_allows_A(self):
         from levels import LEVELS
         from logic import solve, EXIT_DURATION
-        g=Game(LEVELS);g.start(2)
+        g=Game(LEVELS)
+        g.progress.record(0,10);g.progress.record(1,10);g.start(2)
         for r,c in solve(g.board):
             g.click(r,c);g.update(EXIT_DURATION)
         self.assertEqual(g.grade,'A')

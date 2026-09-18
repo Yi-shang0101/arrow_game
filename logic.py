@@ -1,5 +1,6 @@
 """不依赖图形库的游戏规则。坐标统一为 (row, col)。"""
 from dataclasses import dataclass
+from progress import Progress
 
 TIME_LIMIT = 35.0
 EXIT_DURATION = 0.25
@@ -74,8 +75,9 @@ class Animation:
 
 class Game:
     """逻辑状态和动画事务；飞出完成后才删除，动画期间不接受棋盘点击。"""
-    def __init__(self, levels, mistakes=3):
+    def __init__(self, levels, mistakes=3, progress=None):
         self.levels = levels
+        self.progress = progress if progress is not None else Progress(len(levels))
         self.max_mistakes = mistakes
         self.level_index = 0
         self.state = "MENU"
@@ -96,6 +98,8 @@ class Game:
     def start(self, index=0):
         if not 0 <= index < len(self.levels):
             raise ValueError("关卡索引越界")
+        if not self.progress.unlocked(index):
+            return False
         self.level_index = index
         initial = self.levels[index]["board"]
         validate_board(initial)
@@ -109,6 +113,7 @@ class Game:
         self.grade = None
         self.failure_reason = None
         self.state = "PLAYING"
+        return True
 
     def restart(self):
         self.start(self.level_index)
@@ -119,7 +124,7 @@ class Game:
         self.state = "MENU"
 
     def next_level(self):
-        if self.state == "LEVEL_CLEAR":
+        if self.state == "LEVEL_CLEAR" and self.grade in ("A", "B"):
             self.start(self.level_index + 1)
 
     def click(self, row, col):
@@ -177,6 +182,7 @@ class Game:
             self.board[animation.row][animation.col] = None
             if self.remaining == 0:
                 self.grade = time_grade(self.elapsed)
+                self.progress.record(self.level_index, self.elapsed)
                 self.state = "ALL_CLEAR" if self.level_index == len(self.levels)-1 else "LEVEL_CLEAR"
         elif self.mistakes == 0:
             self.failure_reason = "mistakes"

@@ -6,7 +6,8 @@ from pathlib import Path
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame
 from levels import LEVELS
-from logic import DIRECTIONS, Game, TIME_LIMIT, EXIT_DURATION, BUMP_DURATION
+from logic import DIRECTIONS, Game, TIME_LIMIT, EXIT_DURATION, BUMP_DURATION, time_grade
+from progress import Progress
 
 ROOT = Path(__file__).resolve().parent
 WIDTH, HEIGHT = 1040, 760
@@ -19,13 +20,13 @@ COLORS = {'U': '#28765C', 'D': '#D5984C', 'L': '#6683A5', 'R': '#9A7594'}
 
 
 class App:
-    def __init__(self):
+    def __init__(self, save_path=Path.home() / ".arrow_by_arrow" / "progress.json"):
         pygame.display.init()
         pygame.font.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption('一箭又一箭 · Arrow by Arrow')
         self.clock = pygame.time.Clock()
-        self.game = Game(LEVELS)
+        self.game = Game(LEVELS, progress=Progress(len(LEVELS), save_path))
         self.running = True
         font_file = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
         self.font_path = str(font_file) if font_file.exists() else pygame.font.match_font(
@@ -86,29 +87,40 @@ class App:
                 self.board_rect.y+(row+.5)*self.cell)
 
     def start(self, index=0):
-        self.game.start(index)
+        if not self.game.start(index):
+            return
         self.geometry()
         self.notice = '点击箭头，让通路逐渐打开。'
 
     def draw_menu(self):
-        self.text('ARROW / 01', (64, 44), 17, GREEN)
-        self.text('观察方向，找到出口。', (64, 152), 22, MUTED)
-        self.text('一箭又一箭', (60, 194), 64)
-        self.text('一场关于顺序的小小解谜', (64, 293), 24, GREEN)
-        for i, line in enumerate(['点击前方畅通的箭头，让它飞出棋盘。',
-                                  '被其他箭头挡住？你有 3 次失误机会。',
-                                  '每关限时 35 秒，超时即挑战失败。']):
-            self.text(line, (66, 365+i*40), 20, MUTED)
-        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (66, 489), 18, GREEN)
-        self.button('start', '开始挑战', (64, 534, 234, 58), True)
-        self.text('3 个原创关卡   /   鼠标操作   /   轻量解谜', (65, 619), 16, MUTED)
-        self.panel((626, 159, 342, 397), '#E6EBDF', radius=32)
-        demo = [('U',0,0), ('R',0,2), ('L',1,0), ('D',1,1), ('U',1,2), ('R',2,1), ('D',2,2)]
-        for d,r,c in demo:
-            x,y = 657+c*98, 211+r*98
-            self.panel((x,y,84,84), 'white', radius=17)
-            self.arrow((x+42,y+42), d, COLORS[d], 36, 6)
-        self.text('每一次移除，都打开新的可能。', (796,601), 17, MUTED, True)
+        self.text('ARROW / SELECT', (64, 39), 16, GREEN)
+        self.text('一箭又一箭', (60, 82), 49)
+        self.text('选择关卡，挑战更好的自己。', (64, 158), 21, MUTED)
+        self.text('每关 35 秒 · A ≤15秒 / B ≤25秒 / C ≤35秒', (64, 213), 19, GREEN)
+        self.text('前一关达到 A 或 B，即可永久解锁下一关。', (64, 248), 19, MUTED)
+        for i, level in enumerate(LEVELS):
+            x = 64 + i*310
+            unlocked = self.game.progress.unlocked(i)
+            self.panel((x, 311, 290, 279), 'white' if unlocked else '#E7EAE2', LINE)
+            self.text(f'关卡 {i+1:02d}', (x+23, 333), 17, GREEN if unlocked else MUTED)
+            self.text(level['name'], (x+23, 368), 28)
+            best = self.game.progress.best[i]
+            if best is not None:
+                self.text(f'最佳 {time_grade(best)}  ·  {best:.2f} 秒', (x+23, 429), 22, GREEN)
+            else:
+                self.text('尚未挑战' if unlocked else '尚未解锁', (x+23, 429), 22, MUTED)
+            if unlocked:
+                self.text('反复挑战，刷新最佳成绩', (x+23, 471), 16, MUTED)
+                self.button(f'level_{i}', '再次挑战' if best is not None else '开始挑战',
+                            (x+23, 517, 244, 48), True)
+            else:
+                self.text(f'需要第 {i} 关获得 A 或 B', (x+23, 471), 16, MUTED)
+                self.panel((x+23, 517, 244, 48), '#DADFD5', radius=12)
+                self.text('未解锁', (x+145, 541), 19, MUTED, True)
+        self.button('start', '从第一关开始', (64, 628, 240, 51))
+        self.text('已解锁关卡始终可选，较低成绩不会覆盖最佳成绩。', (333, 642), 17, MUTED)
+        if self.game.progress.message:
+            self.text(self.game.progress.message, (64, 706), 17, '#B95D43')
 
     def draw_board(self):
         self.panel((48,171,586,520), 'white', LINE, 26)
@@ -191,13 +203,17 @@ class App:
         self.text(f'评价 {self.game.grade}' if won else 'TRY AGAIN',(520,230),16,GREEN if won else '#B95D43',True)
         self.text(title,(520,291),36,INK,True)
         subtitle=(f'已完成全部 {len(LEVELS)} 个关卡。' if state=='ALL_CLEAR' else
-                  '本关箭头已全部飞出。' if won else '超过 35 秒，时间已用完。' if self.game.failure_reason == 'timeout' else
+                  ('达到 B 及以上，已解锁下一关。' if self.game.grade in ('A','B') else
+                   '本次为 C，重试达到 B 可进入下一关。') if won else '超过 35 秒，时间已用完。' if self.game.failure_reason == 'timeout' else
                   '失误机会已用完，重新挑战本关。')
         self.text(subtitle,(520,350),19,MUTED,True)
         self.text(f'本关用时 {self.game.elapsed:.2f} 秒  ·  提示 {self.game.used_hints} 次',(520,385),16,MUTED,True)
-        label='下一关' if state=='LEVEL_CLEAR' else '从第一关开始' if state=='ALL_CLEAR' else '重新挑战'
-        self.button('continue',label,(320,432,190,55),True)
-        self.button('menu','返回首页',(530,432,190,55))
+        label='下一关' if state=='LEVEL_CLEAR' and self.game.grade in ('A','B') else '再次挑战' if won else '重新挑战'
+        self.button('continue',label,(305,432,138,55),True)
+        self.button('restart','重试本关',(451,432,138,55))
+        self.button('menu','首页选关',(597,432,138,55))
+        if self.game.progress.message:
+            self.text(self.game.progress.message, (520,517), 15, '#B95D43', True)
 
     def draw(self):
         self.screen.fill(BG)
@@ -210,15 +226,16 @@ class App:
     def action(self, key):
         g=self.game
         if key=='start': self.start()
+        elif key.startswith('level_'):
+            self.start(int(key.split('_')[1]))
         elif key=='menu': g.menu()
         elif key=='restart':
             self.start(g.level_index)
         elif key=='hint':
             g.show_hint()
         elif key=='continue':
-            if g.state=='LEVEL_CLEAR': self.start(g.level_index+1)
-            elif g.state=='ALL_CLEAR': self.start()
-            elif g.state=='GAME_OVER': self.start(g.level_index)
+            if g.state=='LEVEL_CLEAR' and g.grade in ('A','B'): self.start(g.level_index+1)
+            elif g.state in ('LEVEL_CLEAR','ALL_CLEAR','GAME_OVER'): self.start(g.level_index)
 
     def handle_event(self,event):
         if event.type==pygame.QUIT:

@@ -10,7 +10,7 @@ from levels import LEVELS
 
 class UITests(unittest.TestCase):
     def setUp(self):
-        self.app=App()
+        self.app=App(save_path=None)
         self.app.draw()
 
     def click(self,pos):
@@ -35,7 +35,7 @@ class UITests(unittest.TestCase):
                 self.finish_animation()
             self.assertEqual(self.app.game.state,'ALL_CLEAR' if i==2 else 'LEVEL_CLEAR')
             self.button('continue')
-        self.assertEqual(self.app.game.level_index,0)
+        self.assertEqual(self.app.game.level_index,2)
         self.assertEqual(self.app.game.state,'PLAYING')
 
     def test_fail_restart_outside_hint_and_home(self):
@@ -78,5 +78,29 @@ class UITests(unittest.TestCase):
             self.app.draw()
         self.assertEqual(self.app.game.grade,'A')
         self.assertIn('continue',self.app.buttons)
+
+    def test_home_selection_and_C_retry(self):
+        self.assertIn('level_0',self.app.buttons)
+        self.assertNotIn('level_1',self.app.buttons)
+        self.app.action('level_1')
+        self.assertEqual(self.app.game.state,'MENU')
+        self.button('level_0')
+        self.app.game.update(26)
+        for r,c in solve(self.app.game.board):
+            self.click(self.app.cell_center(r,c))
+            self.app.game.update(.25);self.app.draw()
+        self.assertEqual(self.app.game.grade,'C')
+        self.button('continue')
+        self.assertEqual(self.app.game.level_index,0)
+        for r,c in solve(self.app.game.board):
+            self.click(self.app.cell_center(r,c))
+            self.app.game.update(.25);self.app.draw()
+        self.button('menu')
+        self.assertIn('level_1',self.app.buttons)
+        self.assertNotIn('level_2',self.app.buttons)
+        self.button('level_1')
+        self.assertEqual(self.app.game.level_index,1)
+        self.button('menu');self.button('level_0')
+        self.assertEqual(self.app.game.level_index,0)
 
 if __name__=='__main__': unittest.main()

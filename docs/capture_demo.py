@@ -11,7 +11,7 @@ from main import App
 from logic import can_exit, solve
 
 out=Path(__file__).resolve().parent
-app=App()
+app=App(save_path=None)
 def capture(name):
     app.draw()
     pygame.image.save(app.screen,str(out/name))
@@ -34,6 +34,7 @@ for r,c in solve(app.game.board):
     app.game.click(r,c)
     app.game.update(1)
 capture('05_clear.png')
+app.game.progress.record(1,10)
 app.start(2)
 capture('06_level3.png')
 for r,c in solve(app.game.board):
@@ -43,5 +44,7 @@ capture('07_all_clear.png')
 app.start(1)
 app.game.update(35.01)
 capture('08_timeout.png')
+app.game.menu()
+capture('09_selection.png')
 pygame.quit()
-print('Saved 8 screenshots')
+print('Saved 9 screenshots')
