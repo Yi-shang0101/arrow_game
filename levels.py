@@ -1,0 +1,3 @@
+"""原创固定关卡；由逆向添加法构造，并经过求解器验证。"""
+
+LEVELS = [{'name': '初识方向', 'description': '先找朝向边界的箭头，逐步打开通路。', 'board': [[None, 'D', None, 'R'], ['L', None, 'U', None], ['L', 'L', 'U', 'U'], [None, None, 'D', 'U']]}, {'name': '交错路径', 'description': '空格不代表畅通，留意整行与整列。', 'board': [['L', None, 'U', 'L', None], ['L', 'R', None, None, None], ['D', None, 'D', 'U', 'R'], ['L', 'U', 'D', 'D', 'U'], ['D', 'D', 'D', 'L', 'U']]}, {'name': '层层解锁', 'description': '从外围开始观察，让阻挡逐层消失。', 'board': [['L', 'R', 'U', 'U', 'R', 'R'], ['U', 'U', 'U', None, 'U', 'U'], ['L', 'D', 'R', 'D', None, 'R'], ['L', None, 'L', 'D', None, 'L'], ['D', 'D', 'R', None, None, 'R'], ['L', 'L', 'R', 'D', 'D', 'D']]}]
