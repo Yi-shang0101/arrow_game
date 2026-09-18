@@ -123,7 +123,8 @@ class App:
         self.text('一场关于顺序的小小解谜', (cx,292), 23, GREEN, True)
         self.home_button('start', '开始游戏', 383)
         self.home_button('select', '选择关卡', 485)
-        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (cx,614), 16, MUTED, True)
+        self.home_button('quit', '退出游戏', 567)
+        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (cx,677), 16, MUTED, True)
         if self.game.progress.message:
             self.text(self.game.progress.message, (cx,730), 16, '#B95D43', True)
 
@@ -279,6 +280,7 @@ class App:
     def action(self, key):
         g=self.game
         if key=='start': self.start()
+        elif key=='quit': self.running=False
         elif key=='begin' and g.state=='READY':
             g.state='PLAYING'
             self.clock.tick()  # 清除说明页的帧间隔，计时从确认后开始。

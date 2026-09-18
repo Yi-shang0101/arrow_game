@@ -126,3 +126,5 @@ git clone history/development.bundle ../arrow-game-repo
 箭头、布局与界面图形由代码绘制，无原商业游戏素材。字体使用 [Noto Sans CJK](https://github.com/notofonts/noto-cjk)，文件为 `Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf`，按 SIL Open Font License 1.1 分发，许可证随包保留在 `assets/OFL.txt`。
 
 首页不再显示详细规则，玩法、35 秒限时与 ABC 评级统一放在关卡开始前的说明页。初次进入、选关、下一关及重试都先进入说明页；阅读期间不计时，也不接受棋盘点击。
+
+首页“选择关卡”下方提供“退出游戏”，两个按钮均为 280×58、字号21，使用相同悬停高亮逻辑；点击退出会正常结束主循环并关闭窗口。
