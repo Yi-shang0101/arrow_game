@@ -2,7 +2,7 @@
 
 环境：Linux、Python 3.12.14、pygame-ce 2.5.8；界面用 SDL dummy 驱动进行无窗口渲染和模拟鼠标事件测试。
 
-结果：45 项 unittest 测试通过。原始输出见 `test_output.txt`。
+结果：47 项 unittest 测试通过。原始输出见 `test_output.txt`。
 
 | 编号 | 内容 | 预期 | 本次实际结果 |
 | --- | --- | --- | --- |
@@ -81,4 +81,8 @@
 
 ## 字体更新
 
-根据用户提供的 Google Fonts 链接，程序现在优先加载 `assets/MaShanZheng-Regular.ttf`（Ma Shan Zheng）。缺少该文件时依次回退到随包 Noto Sans CJK 和系统中文字体；新增 UI 测试确认用户指定字体随包存在且被优先使用。
+根据用户提供的 Google Fonts 链接，程序现在使用 `assets/MaShanZheng-Regular.ttf`（Ma Shan Zheng）绘制标题，使用 `assets/NotoSerifSC-Regular.ttf`（Noto Serif SC）绘制正文和按钮。缺少资源时依次回退到随包 Noto Sans CJK 和系统中文字体；UI 测试确认两种用户指定字体随包存在且被优先使用。
+
+## 当前关卡自动求解
+
+游戏页新增“自动求解 A”按钮。点击后调用当前棋盘的 `solve()`，按正常飞出动画逐步清除箭头，仍然计时并正常触发评级、解锁和音效；自动过程中棋盘点击会被忽略，返回首页或重新开始可以中断。逻辑和 UI 测试均已覆盖，全套测试更新为 47 项。

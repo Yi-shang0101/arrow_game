@@ -106,6 +106,9 @@ class Game:
         self.hint = None
         self.hint_time = 0.0
         self.used_hints = 0
+        self.auto_queue = []
+        self.auto_solving = False
+        self.auto_step_started = False
         self.elapsed = 0.0
         self.grade = None
         self.failure_reason = None
@@ -136,6 +139,9 @@ class Game:
         self.hint = None
         self.hint_time = 0.0
         self.used_hints = 0
+        self.auto_queue = []
+        self.auto_solving = False
+        self.auto_step_started = False
         self.elapsed = 0.0
         self.grade = None
         self.failure_reason = None
@@ -148,14 +154,18 @@ class Game:
     def menu(self):
         self.animation = None
         self.hint = None
+        self.auto_queue = []
+        self.auto_solving = False
+        self.auto_step_started = False
         self.state = "MENU"
 
     def next_level(self):
         if self.state == "LEVEL_CLEAR" and self.grade in ("A", "B"):
             self.start(self.level_index + 1)
 
-    def click(self, row, col):
-        if self.state != "PLAYING" or self.animation:
+    def click(self, row, col, automatic=False):
+        if (self.state != "PLAYING" or self.animation or
+                (self.auto_solving and not automatic)):
             return "ignored"
         if not (0 <= row < len(self.board) and 0 <= col < len(self.board[0])):
             return "ignored"
@@ -169,8 +179,26 @@ class Game:
         self.animation = Animation(row, col, direction, kind)
         return kind
 
+    def auto_solve(self):
+        """按当前棋盘的一条可解顺序自动逐支移除箭头。
+
+        自动求解仍然使用正常计时和飞出动画，不跳过关卡结算；启动后锁定
+        棋盘点击，避免手动操作与自动队列同时修改棋盘。
+        """
+        if self.state != "PLAYING" or self.animation or self.auto_solving:
+            return False
+        solution = solve(self.board)
+        if not solution:
+            return False
+        self.auto_queue = list(solution)
+        self.auto_solving = True
+        self.auto_step_started = False
+        self.hint = None
+        self.hint_time = 0.0
+        return True
+
     def show_hint(self):
-        if self.state != "PLAYING" or self.animation:
+        if self.state != "PLAYING" or self.animation or self.auto_solving:
             return
         moves = available_moves(self.board)
         if moves:
@@ -183,6 +211,7 @@ class Game:
             raise ValueError("时间间隔不能为负数")
         if self.state != "PLAYING":
             return
+        self.auto_step_started = False
         # 最后一支箭头可能在本帧结束之前飞完，按实际完成时刻结算。
         animation = self.animation
         duration = EXIT_DURATION if animation and animation.kind == "exit" else BUMP_DURATION
@@ -195,11 +224,17 @@ class Game:
             self.failure_reason = "timeout"
             self.animation = None
             self.hint = None
+            self.auto_queue = []
+            self.auto_solving = False
             return
         self.hint_time = max(0.0, self.hint_time - advance)
         if self.hint_time == 0:
             self.hint = None
         if not animation:
+            if self.auto_solving and self.auto_queue:
+                row, col = self.auto_queue.pop(0)
+                if self.click(row, col, automatic=True) == "exit":
+                    self.auto_step_started = True
             return
         animation.elapsed = round(animation.elapsed + advance, 9)
         if animation.elapsed < duration:
@@ -211,6 +246,10 @@ class Game:
                 self.grade = time_grade(self.elapsed, self.level_rules)
                 self.progress.record(self.level_index, self.elapsed, self.time_limit)
                 self.state = "ALL_CLEAR" if self.level_index == len(self.levels)-1 else "LEVEL_CLEAR"
+                self.auto_queue = []
+                self.auto_solving = False
         elif self.mistakes == 0:
             self.failure_reason = "mistakes"
             self.state = "GAME_OVER"
+            self.auto_queue = []
+            self.auto_solving = False

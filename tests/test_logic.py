@@ -115,4 +115,16 @@ class FlowTests(unittest.TestCase):
         self.assertEqual(self.g.state,'MENU')
         self.assertIsNone(self.g.animation)
 
+    def test_auto_solve_current_level_uses_normal_flow(self):
+        self.assertTrue(self.g.auto_solve())
+        self.assertTrue(self.g.auto_solving)
+        self.assertEqual(self.g.click(0, 1), 'ignored')
+        for _ in range(20):
+            self.g.update(0.25)
+            if self.g.state != 'PLAYING':
+                break
+        self.assertEqual(self.g.state, 'LEVEL_CLEAR')
+        self.assertFalse(self.g.auto_solving)
+        self.assertEqual(self.g.mistakes, 3)
+
 if __name__=='__main__': unittest.main()

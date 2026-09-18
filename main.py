@@ -232,18 +232,20 @@ class App:
         self.quit_requested = False
         self.quit_channel = None
         self.quit_deadline = 0
-        # 优先使用用户指定的 Google Fonts「Ma Shan Zheng」；保留随包中文字体
-        # 和系统字体作为回退，避免在缺少资源时出现中文乱码。
-        preferred_font = ROOT / 'assets' / 'MaShanZheng-Regular.ttf'
-        bundled_fallback = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
-        if preferred_font.exists():
-            self.font_path = str(preferred_font)
-        elif bundled_fallback.exists():
-            self.font_path = str(bundled_fallback)
-        else:
-            self.font_path = pygame.font.match_font(
-                'microsoftyahei,simhei,pingfangsc,notosanscjksc,wenquanyizenhei')
-        if not self.font_path:
+        # 采用用户提供的 Google Fonts 组合：标题使用 Ma Shan Zheng，正文和
+        # 按钮使用 Noto Serif SC；保留随包字体和系统字体作为回退。
+        display_font = ROOT / 'assets' / 'MaShanZheng-Regular.ttf'
+        serif_font = ROOT / 'assets' / 'NotoSerifSC-Regular.ttf'
+        sans_font = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
+        system_font = pygame.font.match_font(
+            'microsoftyahei,simhei,pingfangsc,notosanscjksc,wenquanyizenhei')
+        self.display_font_path = str(display_font) if display_font.exists() else (
+            str(serif_font) if serif_font.exists() else system_font)
+        self.body_font_path = str(serif_font) if serif_font.exists() else (
+            str(sans_font) if sans_font.exists() else system_font)
+        # 保留旧属性，方便外部检查当前首选显示字体。
+        self.font_path = self.display_font_path
+        if not self.display_font_path or not self.body_font_path:
             raise RuntimeError('缺少中文字体，请保留 assets 文件夹或安装中文字体。')
         self.fonts = {}
         self.buttons = {}
@@ -274,10 +276,12 @@ class App:
             self.audio.play_failure()
             self.audio.play_music('menu')
 
-    def font(self, size):
-        if size not in self.fonts:
-            self.fonts[size] = pygame.font.Font(self.font_path, size)
-        return self.fonts[size]
+    def font(self, size, display=False):
+        key = (size, display)
+        if key not in self.fonts:
+            path = self.display_font_path if display else self.body_font_path
+            self.fonts[key] = pygame.font.Font(path, size)
+        return self.fonts[key]
 
     def theme_color(self, value):
         """把旧页面使用的颜色常量映射到当前主题，保持三种模式整体一致。"""
@@ -299,9 +303,9 @@ class App:
         key = aliases.get(value)
         return palette[key] if key else value
 
-    def text(self, value, pos, size=20, color=INK, center=False):
+    def text(self, value, pos, size=20, color=INK, center=False, display=False):
         render_color = '#FFFFFF' if color == 'white' else self.theme_color(color)
-        surf = self.font(size).render(str(value), True, render_color)
+        surf = self.font(size, display=display).render(str(value), True, render_color)
         rect = surf.get_rect(center=pos) if center else surf.get_rect(topleft=pos)
         self.screen.blit(surf, rect)
         return rect
@@ -402,7 +406,7 @@ class App:
         cx = WIDTH//2
         self.text('ARROW BY ARROW', (cx,89), 15, GREEN, True)
         self.text('观察方向，找到出口。', (cx,146), 21, MUTED, True)
-        self.text('一箭又一箭', (cx,221), 64, INK, True)
+        self.text('一箭又一箭', (cx,221), 64, INK, True, display=True)
         self.text('一场关于顺序的小小解谜', (cx,292), 23, GREEN, True)
         self.home_button('start', '开始游戏', 335)
         self.home_button('select', '选择关卡', 432)
@@ -415,7 +419,7 @@ class App:
     def draw_settings(self):
         """设置页：音效/音乐音量滑动条与三种显示模式。"""
         self.text('ARROW / SETTINGS', (64, 39), 16, GREEN)
-        self.text('设置', (60, 82), 49)
+        self.text('设置', (60, 82), 49, display=True)
         self.text('调整音量和显示模式，修改会立即生效。', (64, 158), 21, MUTED)
         self.panel((150, 195, 740, 420), 'white', LINE, 26)
         self.text('音量', (210, 238), 24, GREEN)
@@ -433,9 +437,9 @@ class App:
         cx = WIDTH//2
         level = LEVELS[self.game.level_index]
         rules = level_rules(level)
-        self.text('准备好了吗？', (cx,121), 22, GREEN, True)
+        self.text('准备好了吗？', (cx,121), 22, GREEN, True, display=True)
         self.text(f'第 {self.game.level_index+1} 关 · {level["name"]} · {rules["label"]}',
-                  (cx,185), 38, INK, True)
+                  (cx,185), 38, INK, True, display=True)
         self.panel((230,249,580,260), 'white', LINE, 24)
         for i, line in enumerate([f'点击前方畅通的箭头，让它飞出棋盘。',
                                   f'本关限时 {rules["time_limit"]:.0f} 秒，拥有 3 次失误机会。',
@@ -451,7 +455,7 @@ class App:
 
     def draw_selection(self):
         self.text('ARROW / SELECT', (64, 39), 16, GREEN)
-        self.text('选择关卡', (60, 82), 49)
+        self.text('选择关卡', (60, 82), 49, display=True)
         self.text('选择关卡，挑战更好的自己。', (64, 158), 21, MUTED)
         self.text('每关按难度配置限时与评级，前一关达到 A 或 B 才能解锁下一关。',
                   (64, 213), 19, GREEN)
@@ -528,7 +532,7 @@ class App:
         g=self.game
         level=LEVELS[g.level_index]
         rules = level_rules(level)
-        self.text('一箭又一箭', (48,31), 31)
+        self.text('一箭又一箭', (48,31), 31, display=True)
         self.text('ARROW BY ARROW', (50,80), 12, MUTED)
         self.text(f'关卡 {g.level_index+1:02d} / {len(LEVELS):02d}', (48,124), 20, GREEN)
         self.text(f'{level["name"]} · {rules["label"]}', (225,124), 20)
@@ -550,9 +554,12 @@ class App:
         self.text(f'剩余 {max(0, rules["time_limit"]-g.elapsed):.2f} 秒', (686,450), 18, time_color)
         self.text(f'A ≤{rules["A"]:.0f}s  /  B ≤{rules["B"]:.0f}s  /  C ≤{rules["C"]:.0f}s',
                   (686,487), 16, MUTED)
-        self.button('hint','提示  H',(662,550,156,49))
-        self.button('restart','重新开始  R',(834,550,158,49))
-        self.text('提示不会扣除失误机会', (662,616), 16, MUTED)
+        auto_label = '自动求解中…' if g.auto_solving else '自动求解  A'
+        self.button('auto_solve', auto_label, (662,550,156,49))
+        self.button('hint','提示  H',(834,550,158,49))
+        self.button('restart','重新开始  R',(662,616,330,43))
+        self.text('自动求解会按正常计时完成当前关卡；提示不会扣除失误机会。',
+                  (662,677), 14, MUTED)
         self.text(self.notice,(50,713),18,'#B95D43' if g.animation and g.animation.kind=='bump' else MUTED)
 
     def draw_result(self):
@@ -567,7 +574,7 @@ class App:
         won=state!='GAME_OVER'
         title={'LEVEL_CLEAR':'通路已打开！','ALL_CLEAR':'全部通关！','GAME_OVER':'再观察一次吧'}[state]
         self.text(f'评价 {self.game.grade}' if won else 'TRY AGAIN',(520,230),16,GREEN if won else '#B95D43',True)
-        self.text(title,(520,291),36,INK,True)
+        self.text(title,(520,291),36,INK,True, display=True)
         subtitle=(f'已完成全部 {len(LEVELS)} 个关卡。' if state=='ALL_CLEAR' else
                   ('达到 B 及以上，已解锁下一关。' if self.game.grade in ('A','B') else
                    '本次为 C，重试达到 B 可进入下一关。') if won else
@@ -646,6 +653,11 @@ class App:
             self.start(g.level_index)
         elif key=='hint':
             g.show_hint()
+        elif key=='auto_solve':
+            if g.auto_solve():
+                self.notice = '正在自动完成本关，棋盘暂时锁定。'
+            else:
+                self.notice = '当前无法启动自动求解。'
         elif key=='continue':
             if g.state=='LEVEL_CLEAR' and g.grade in ('A','B'): self.start(g.level_index+1)
             elif g.state in ('LEVEL_CLEAR','ALL_CLEAR','GAME_OVER'): self.start(g.level_index)
@@ -657,6 +669,7 @@ class App:
             if event.key==pygame.K_ESCAPE: self.action('menu')
             elif event.key==pygame.K_r and self.game.state=='PLAYING': self.action('restart')
             elif event.key==pygame.K_h and self.game.state=='PLAYING': self.action('hint')
+            elif event.key==pygame.K_a and self.game.state=='PLAYING': self.action('auto_solve')
             elif event.key==pygame.K_RETURN:
                 self.action('start' if self.game.state=='MENU' else 'begin' if self.game.state=='READY' else 'continue')
         elif event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
@@ -705,6 +718,8 @@ class App:
             # 不截断 dt：低帧率、窗口拖动等期间也必须累计实际经过时间。
             dt=self.clock.tick(60)/1000
             self.game.update(dt)
+            if self.game.auto_step_started:
+                self.audio.play_effect('fly')
             self.draw()  # 超时后先更新结果页按钮，再处理鼠标事件。
             for event in pygame.event.get():
                 self.handle_event(event)

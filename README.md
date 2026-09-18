@@ -87,9 +87,9 @@ python3.12 -m venv .venv
 | `progress.py` | 最佳成绩、解锁判定与本地存档 |
 | `tests/test_progress.py` | 9 项解锁、最佳成绩与存档测试 |
 | `levels.py` | 五个固定关卡及难度配置 |
-| `tests/test_logic.py` | 11 项核心规则测试 |
+| `tests/test_logic.py` | 12 项核心规则测试 |
 | `tests/test_timer.py` | 9 项计时、评级边界和超时测试 |
-| `tests/test_ui.py` | 8 项界面事件流程测试 |
+| `tests/test_ui.py` | 9 项界面事件流程测试 |
 | `tests/test_audio.py` | 8 项音频与结果页测试 |
 | `assets/` | 中文字体、字体许可证及音频资源 |
 | `docs/` | 截图、开发记录、测试报告、PSP 表与通关顺序 |
@@ -117,7 +117,7 @@ python3.12 -m venv .venv
 python -m unittest discover -s tests -v
 ```
 
-45 项测试已在 Linux / Python 3.12.14 / pygame-ce 2.5.8 环境通过。界面测试使用 SDL dummy 驱动和模拟鼠标事件，可在无桌面环境运行；覆盖五关完整通关、难度评级阈值、难度解锁、旧存档迁移、失败重开、重复点击、中途重开、结果页返回首页、随机失败音效、设置页交互和用户指定字体加载。
+47 项测试已在 Linux / Python 3.12.14 / pygame-ce 2.5.8 环境通过。界面测试使用 SDL dummy 驱动和模拟鼠标事件，可在无桌面环境运行；覆盖五关完整通关、难度评级阈值、难度解锁、旧存档迁移、失败重开、重复点击、中途重开、结果页返回首页、随机失败音效、设置页交互、用户指定字体加载和当前关卡自动求解。
 
 原始输出见 `docs/test_output.txt`。自动化测试不替代本人试玩：Windows 桌面实机运行、主观动画流畅度以及每关人工试玩，需下载后确认。
 
@@ -137,11 +137,13 @@ git clone history/development.bundle ../arrow-game-repo
 
 ## 资源来源
 
-箭头、布局与界面图形由代码绘制，无原商业游戏素材。游戏界面优先使用 Google Fonts 的 [Ma Shan Zheng](https://fonts.google.com/specimen/Ma+Shan+Zheng)（马善政体），对应文件为 `assets/MaShanZheng-Regular.ttf`；若该文件缺失，则回退到随包的 `NotoSansCJKsc-Regular.otf` 或系统中文字体。两种字体均按 SIL Open Font License 1.1 分发，许可证随包保留在 `assets/OFL.txt`。Ma Shan Zheng 的网页引入地址为：`https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap`。
+箭头、布局与界面图形由代码绘制，无原商业游戏素材。游戏界面使用用户提供的 Google Fonts 组合：标题使用 [Ma Shan Zheng](https://fonts.google.com/specimen/Ma+Shan+Zheng)（马善政体），正文和按钮使用 Noto Serif SC；对应文件为 `assets/MaShanZheng-Regular.ttf` 与 `assets/NotoSerifSC-Regular.ttf`。若资源缺失，则回退到随包的 `NotoSansCJKsc-Regular.otf` 或系统中文字体。字体按 SIL Open Font License 1.1 分发，许可证随包保留在 `assets/OFL.txt`。网页引入地址为：`https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@200..900&display=swap`。
 
 首页不再显示详细规则，玩法、按难度限时与 ABC 评级统一放在关卡开始前的说明页。初次进入、选关、下一关及重试都先进入说明页；阅读期间不计时，也不接受棋盘点击。
 
 首页在“选择关卡”与“退出游戏”之间提供“设置”，四个入口沿用统一的居中布局和悬停逻辑；设置页可调节两类音量并切换显示主题。退出游戏会播放一条新失败音效后正常结束主循环并关闭窗口。
+
+游戏页提供“提示 H”和“自动求解 A”。自动求解会调用当前棋盘求解器，按正常飞出动画和计时逐步完成当前关卡；执行期间锁定手动棋盘点击，但仍可返回首页或重新开始。
 
 ## 音乐与音效
 

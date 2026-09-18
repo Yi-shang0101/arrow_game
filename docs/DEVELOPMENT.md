@@ -113,4 +113,8 @@ AI 修改：每关计时，游戏界面增加用时和倒计时，结果页显�
 
 ## 用户指定字体
 
-用户提供 Google Fonts 的 Ma Shan Zheng 引入链接，要求用于游戏界面。AI 下载其对应的 `MaShanZheng-Regular.ttf` 并放入 `assets/`，Pygame 启动时优先加载该字体；如果资源被删除，则回退到随包 Noto Sans CJK，再回退到系统中文字体。字体资源与原有 Noto Sans CJK 一并遵循 `assets/OFL.txt` 中的 SIL Open Font License 1.1。修改后需重新检查中文渲染、按钮宽度和五关界面截图。
+用户提供 Google Fonts 的 Ma Shan Zheng 与 Noto Serif SC 引入链接，要求用于游戏界面。AI 下载对应的 `MaShanZheng-Regular.ttf` 和 `NotoSerifSC-Regular.ttf` 并放入 `assets/`，Pygame 启动时标题优先使用 Ma Shan Zheng，正文和按钮使用 Noto Serif SC；资源缺失时回退到随包 Noto Sans CJK，再回退到系统中文字体。字体资源与原有 Noto Sans CJK 一并遵循 `assets/OFL.txt` 中的 SIL Open Font License 1.1。修改后需重新检查中文渲染、按钮宽度和五关界面截图。
+
+## 用户指定的字体组合与自动求解
+
+用户进一步更新字体链接，要求同时使用 Ma Shan Zheng 与 Noto Serif SC。AI 将字体职责分开：Ma Shan Zheng 用于主标题和结果标题，Noto Serif SC 用于正文、按钮和数据标签。游戏页新增“自动求解 A”按钮和键盘快捷键 A；点击后调用当前棋盘的 `solve()` 顺序，沿用正常飞出动画、计时、音效与通关结算，自动过程中锁定棋盘手动点击，返回首页或重新开始仍可中断。新增逻辑和 UI 测试，当前共 47 项测试通过。

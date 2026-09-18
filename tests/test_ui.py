@@ -162,6 +162,24 @@ class UITests(unittest.TestCase):
     def test_user_font_is_preferred(self):
         self.assertEqual(Path(self.app.font_path).name, 'MaShanZheng-Regular.ttf')
         self.assertTrue(Path(self.app.font_path).is_file())
+        self.assertEqual(Path(self.app.body_font_path).name, 'NotoSerifSC-Regular.ttf')
+        self.assertTrue(Path(self.app.body_font_path).is_file())
+
+    def test_auto_solve_button_finishes_current_level(self):
+        self.button('start')
+        self.assertIn('auto_solve', self.app.buttons)
+        self.click(self.app.buttons['auto_solve'].center)
+        self.assertTrue(self.app.game.auto_solving)
+        mistakes = self.app.game.mistakes
+        self.click(self.app.cell_center(0, 0))
+        self.assertEqual(self.app.game.mistakes, mistakes)
+        for _ in range(80):
+            self.app.game.update(0.25)
+            self.app.draw()
+            if self.app.game.state != 'PLAYING':
+                break
+        self.assertEqual(self.app.game.state, 'LEVEL_CLEAR')
+        self.assertFalse(self.app.game.auto_solving)
 
     def test_ready_screen_waits_for_confirmation(self):
         self.assertGreater(self.app.buttons['start'].width,self.app.buttons['select'].width)
