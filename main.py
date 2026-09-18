@@ -232,9 +232,17 @@ class App:
         self.quit_requested = False
         self.quit_channel = None
         self.quit_deadline = 0
-        font_file = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
-        self.font_path = str(font_file) if font_file.exists() else pygame.font.match_font(
-            'microsoftyahei,simhei,pingfangsc,notosanscjksc,wenquanyizenhei')
+        # 优先使用用户指定的 Google Fonts「Ma Shan Zheng」；保留随包中文字体
+        # 和系统字体作为回退，避免在缺少资源时出现中文乱码。
+        preferred_font = ROOT / 'assets' / 'MaShanZheng-Regular.ttf'
+        bundled_fallback = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
+        if preferred_font.exists():
+            self.font_path = str(preferred_font)
+        elif bundled_fallback.exists():
+            self.font_path = str(bundled_fallback)
+        else:
+            self.font_path = pygame.font.match_font(
+                'microsoftyahei,simhei,pingfangsc,notosanscjksc,wenquanyizenhei')
         if not self.font_path:
             raise RuntimeError('缺少中文字体，请保留 assets 文件夹或安装中文字体。')
         self.fonts = {}

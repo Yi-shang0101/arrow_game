@@ -42,8 +42,9 @@ test_mouse_five_level_playthrough (test_ui.UITests.test_mouse_five_level_playthr
 test_ready_screen_waits_for_confirmation (test_ui.UITests.test_ready_screen_waits_for_confirmation) ... ok
 test_settings_sliders_themes_and_home_navigation (test_ui.UITests.test_settings_sliders_themes_and_home_navigation) ... ok
 test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
+test_user_font_is_preferred (test_ui.UITests.test_user_font_is_preferred) ... ok
 
 ----------------------------------------------------------------------
-Ran 44 tests in 7.195s
+Ran 45 tests in 8.717s
 
 OK

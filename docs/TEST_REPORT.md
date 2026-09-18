@@ -2,7 +2,7 @@
 
 环境：Linux、Python 3.12.14、pygame-ce 2.5.8；界面用 SDL dummy 驱动进行无窗口渲染和模拟鼠标事件测试。
 
-结果：44 项 unittest 测试通过。原始输出见 `test_output.txt`。
+结果：45 项 unittest 测试通过。原始输出见 `test_output.txt`。
 
 | 编号 | 内容 | 预期 | 本次实际结果 |
 | --- | --- | --- | --- |
@@ -78,3 +78,7 @@
 ## 困难关卡与难度评级验证
 
 新增第 4、5 关后，`test_logic` 验证五关均可求解；`test_timer` 验证困难阈值 A≤25/B≤40/C≤55、专家阈值 A≤35/B≤55/C≤75 及超时失败；`test_progress` 验证普通关卡 25 秒、困难关卡 40 秒的 B 评价分别解锁后续关卡，并验证旧版三关存档迁移。选关页已检查两列五关布局；全套 44 项测试通过。
+
+## 字体更新
+
+根据用户提供的 Google Fonts 链接，程序现在优先加载 `assets/MaShanZheng-Regular.ttf`（Ma Shan Zheng）。缺少该文件时依次回退到随包 Noto Sans CJK 和系统中文字体；新增 UI 测试确认用户指定字体随包存在且被优先使用。

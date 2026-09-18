@@ -3,6 +3,7 @@ import os
 os.environ.setdefault('SDL_VIDEODRIVER','dummy')
 os.environ.setdefault('SDL_AUDIODRIVER','dummy')
 import unittest
+from pathlib import Path
 import pygame
 from main import App
 from logic import can_exit, solve
@@ -157,6 +158,10 @@ class UITests(unittest.TestCase):
         self.click(self.app.buttons['menu'].center)
         self.assertEqual(self.app.game.state, 'MENU')
         self.assertIn('settings', self.app.buttons)
+
+    def test_user_font_is_preferred(self):
+        self.assertEqual(Path(self.app.font_path).name, 'MaShanZheng-Regular.ttf')
+        self.assertTrue(Path(self.app.font_path).is_file())
 
     def test_ready_screen_waits_for_confirmation(self):
         self.assertGreater(self.app.buttons['start'].width,self.app.buttons['select'].width)
