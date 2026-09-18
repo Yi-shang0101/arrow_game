@@ -37,6 +37,6 @@ test_ready_screen_waits_for_confirmation (test_ui.UITests.test_ready_screen_wait
 test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
 
 ----------------------------------------------------------------------
-Ran 37 tests in 2.865s
+Ran 37 tests in 2.847s
 
 OK

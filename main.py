@@ -273,6 +273,7 @@ class App:
         self.button('begin', '开始挑战', (350,550,340,64), True)
         self.text('点击“开始挑战”后计时，现在可放心阅读规则。', (cx,645), 17, MUTED, True)
         self.button('select', '返回选关', (64, 40, 140,44))
+        self.button('menu', '返回首页', (836, 40, 140,44))
 
     def draw_selection(self):
         self.text('ARROW / SELECT', (64, 39), 16, GREEN)
