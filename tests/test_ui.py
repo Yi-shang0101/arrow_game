@@ -124,6 +124,39 @@ class UITests(unittest.TestCase):
         self.app.draw()
         self.assertEqual(self.app.game.state,'MENU')
 
+    def test_settings_sliders_themes_and_home_navigation(self):
+        self.assertIn('settings', self.app.buttons)
+        self.click(self.app.buttons['settings'].center)
+        self.assertEqual(self.app.game.state, 'SETTINGS')
+        self.assertIn('effect_volume', self.app.sliders)
+        self.assertIn('music_volume', self.app.sliders)
+
+        effect_slider = self.app.sliders['effect_volume']
+        self.app.handle_event(pygame.event.Event(
+            pygame.MOUSEBUTTONDOWN, button=1, pos=(effect_slider.right, effect_slider.centery)))
+        self.app.draw()
+        self.assertAlmostEqual(self.app.audio.effect_volume, 1.0)
+        self.app.handle_event(pygame.event.Event(
+            pygame.MOUSEMOTION, pos=(effect_slider.left, effect_slider.centery),
+            buttons=(1, 0, 0)))
+        self.app.draw()
+        self.assertAlmostEqual(self.app.audio.effect_volume, 0.0)
+        self.app.handle_event(pygame.event.Event(
+            pygame.MOUSEBUTTONUP, button=1, pos=(effect_slider.left, effect_slider.centery)))
+
+        music_slider = self.app.sliders['music_volume']
+        self.app.handle_event(pygame.event.Event(
+            pygame.MOUSEBUTTONDOWN, button=1, pos=(music_slider.right, music_slider.centery)))
+        self.app.draw()
+        self.assertAlmostEqual(self.app.audio.music_volume, 1.0)
+
+        for key in ('theme_night', 'theme_eye', 'theme_day'):
+            self.click(self.app.buttons[key].center)
+        self.assertEqual(self.app.theme_mode, 'day')
+        self.click(self.app.buttons['menu'].center)
+        self.assertEqual(self.app.game.state, 'MENU')
+        self.assertIn('settings', self.app.buttons)
+
     def test_ready_screen_waits_for_confirmation(self):
         self.assertGreater(self.app.buttons['start'].width,self.app.buttons['select'].width)
         self.assertGreater(self.app.buttons['start'].height,self.app.buttons['select'].height)
