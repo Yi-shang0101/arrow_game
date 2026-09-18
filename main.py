@@ -235,8 +235,8 @@ class App:
                     self.action(key)
                     return
             if self.game.state=='PLAYING' and self.board_rect.collidepoint(event.pos):
-                c=(event.pos[0]-self.board_rect.x)//self.cell
-                r=(event.pos[1]-self.board_rect.y)//self.cell
+                c=int((event.pos[0]-self.board_rect.x)//self.cell)
+                r=int((event.pos[1]-self.board_rect.y)//self.cell)
                 result=self.game.click(r,c)
                 if result=='bump': self.notice='前方有阻挡！先移除挡路的箭头。'
                 elif result=='exit': self.notice='通路畅通，箭头飞出！'
