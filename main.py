@@ -19,6 +19,87 @@ LINE = '#DFE5DC'
 COLORS = {'U': '#28765C', 'D': '#D5984C', 'L': '#6683A5', 'R': '#9A7594'}
 
 
+class AudioManager:
+    """集中管理音乐和音效；没有可用音频设备时安全降级为静音。"""
+    MUSIC = {'menu': '主菜单音乐.mp3', 'game': '进行游戏音乐.mp3'}
+    EFFECTS = {
+        'countdown': '倒计时.wav',
+        'failure': '游戏失败.wav',
+        'success': '游戏成功.wav',
+        'blocked': '箭头被阻挡.wav',
+        'fly': '箭头飞出.wav',
+    }
+
+    def __init__(self, audio_dir):
+        self.audio_dir = Path(audio_dir)
+        self.enabled = False
+        self.current_music = None
+        self.countdown_channel = None
+        self.effects = {}
+        try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+            pygame.mixer.set_num_channels(8)
+            for key, filename in self.EFFECTS.items():
+                path = self.audio_dir / filename
+                if path.exists():
+                    self.effects[key] = pygame.mixer.Sound(str(path))
+            self.enabled = bool(self.effects)
+            if self.enabled:
+                for key, sound in self.effects.items():
+                    sound.set_volume(0.42 if key == 'countdown' else 0.62)
+        except (pygame.error, OSError):
+            self.enabled = False
+            self.effects.clear()
+
+    def play_music(self, key):
+        if not self.enabled or key not in self.MUSIC:
+            return
+        path = self.audio_dir / self.MUSIC[key]
+        if not path.exists():
+            return
+        if self.current_music == key and pygame.mixer.music.get_busy():
+            return
+        try:
+            pygame.mixer.music.load(str(path))
+            pygame.mixer.music.set_volume(0.28 if key == 'menu' else 0.24)
+            pygame.mixer.music.play(-1)
+            self.current_music = key
+        except pygame.error:
+            self.current_music = None
+
+    def play_effect(self, key):
+        if self.enabled and key in self.effects:
+            try:
+                self.effects[key].play()
+            except pygame.error:
+                pass
+
+    def start_countdown(self):
+        self.stop_countdown()
+        if self.enabled and 'countdown' in self.effects:
+            try:
+                self.countdown_channel = self.effects['countdown'].play()
+            except pygame.error:
+                self.countdown_channel = None
+
+    def stop_countdown(self):
+        if self.countdown_channel is not None:
+            try:
+                self.countdown_channel.stop()
+            except pygame.error:
+                pass
+            self.countdown_channel = None
+
+    def stop_music(self):
+        if self.enabled:
+            try:
+                pygame.mixer.music.stop()
+            except pygame.error:
+                pass
+        self.current_music = None
+
+
 class App:
     def __init__(self, save_path=Path.home() / ".arrow_by_arrow" / "progress.json"):
         pygame.display.init()
@@ -27,6 +108,8 @@ class App:
         pygame.display.set_caption('一箭又一箭 · Arrow by Arrow')
         self.clock = pygame.time.Clock()
         self.game = Game(LEVELS, progress=Progress(len(LEVELS), save_path))
+        self.audio = AudioManager(ROOT / 'assets' / 'audio')
+        self._audio_state = None
         self.running = True
         font_file = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
         self.font_path = str(font_file) if font_file.exists() else pygame.font.match_font(
@@ -38,6 +121,26 @@ class App:
         self.board_rect = pygame.Rect(64, 190, 540, 480)
         self.cell = 80
         self.notice = '点击箭头，让通路逐渐打开。'
+
+    def sync_audio(self):
+        state = self.game.state
+        if state == self._audio_state:
+            return
+        self._audio_state = state
+        if state in ('MENU', 'SELECT', 'READY'):
+            self.audio.stop_countdown()
+            self.audio.play_music('menu')
+        elif state == 'PLAYING':
+            self.audio.play_music('game')
+            self.audio.start_countdown()
+        elif state in ('LEVEL_CLEAR', 'ALL_CLEAR'):
+            self.audio.stop_countdown()
+            self.audio.play_effect('success')
+            self.audio.play_music('menu')
+        elif state == 'GAME_OVER':
+            self.audio.stop_countdown()
+            self.audio.play_effect('failure')
+            self.audio.play_music('menu')
 
     def font(self, size):
         if size not in self.fonts:
@@ -268,6 +371,7 @@ class App:
             self.text(self.game.progress.message, (520,517), 15, '#B95D43', True)
 
     def draw(self):
+        self.sync_audio()
         self.screen.fill(BG)
         self.buttons.clear()
         if self.game.state=='MENU': self.draw_menu()
@@ -316,8 +420,12 @@ class App:
                 c=int((event.pos[0]-self.board_rect.x)//self.cell)
                 r=int((event.pos[1]-self.board_rect.y)//self.cell)
                 result=self.game.click(r,c)
-                if result=='bump': self.notice='前方有阻挡！先移除挡路的箭头。'
-                elif result=='exit': self.notice='通路畅通，箭头飞出！'
+                if result=='bump':
+                    self.audio.play_effect('blocked')
+                    self.notice='前方有阻挡！先移除挡路的箭头。'
+                elif result=='exit':
+                    self.audio.play_effect('fly')
+                    self.notice='通路畅通，箭头飞出！'
 
     def run(self):
         self.draw()
