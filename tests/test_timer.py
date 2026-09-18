@@ -1,5 +1,5 @@
 import unittest
-from logic import Game, time_grade
+from logic import DIFFICULTY_RULES, Game, time_grade
 
 class TimerTests(unittest.TestCase):
     def game(self):
@@ -9,6 +9,15 @@ class TimerTests(unittest.TestCase):
         for seconds, grade in [(0,'A'),(15,'A'),(15.000001,'B'),(25,'B'),
                                (25.000001,'C'),(35,'C'),(35.000001,None)]:
             with self.subTest(seconds=seconds): self.assertEqual(time_grade(seconds),grade)
+
+    def test_harder_levels_use_longer_difficulty_thresholds(self):
+        self.assertEqual(time_grade(25, DIFFICULTY_RULES['hard']), 'A')
+        self.assertEqual(time_grade(40, DIFFICULTY_RULES['hard']), 'B')
+        self.assertEqual(time_grade(55, DIFFICULTY_RULES['hard']), 'C')
+        self.assertIsNone(time_grade(55.001, DIFFICULTY_RULES['hard']))
+        g = Game([{'difficulty': 'hard', 'board': [['U']]}])
+        g.start(); g.update(55.001)
+        self.assertEqual((g.state, g.failure_reason), ('GAME_OVER', 'timeout'))
 
     def test_timeout_idle_strictly_after_35(self):
         g=self.game(); g.update(35)

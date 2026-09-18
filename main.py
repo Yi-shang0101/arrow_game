@@ -7,7 +7,8 @@ from pathlib import Path
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame
 from levels import LEVELS
-from logic import DIRECTIONS, Game, TIME_LIMIT, EXIT_DURATION, BUMP_DURATION, time_grade
+from logic import (DIRECTIONS, Game, EXIT_DURATION, BUMP_DURATION,
+                   level_rules, time_grade)
 from progress import Progress
 
 ROOT = Path(__file__).resolve().parent
@@ -220,7 +221,11 @@ class App:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption('一箭又一箭 · Arrow by Arrow')
         self.clock = pygame.time.Clock()
-        self.game = Game(LEVELS, progress=Progress(len(LEVELS), save_path))
+        limits = [level_rules(level)['time_limit'] for level in LEVELS]
+        unlock_times = [level_rules(level)['B'] for level in LEVELS]
+        self.game = Game(LEVELS, progress=Progress(len(LEVELS), save_path,
+                                                   time_limits=limits,
+                                                   unlock_times=unlock_times))
         self.audio = AudioManager(ROOT / 'assets' / 'audio')
         self._audio_state = None
         self.running = True
@@ -418,16 +423,19 @@ class App:
 
     def draw_ready(self):
         cx = WIDTH//2
+        level = LEVELS[self.game.level_index]
+        rules = level_rules(level)
         self.text('准备好了吗？', (cx,121), 22, GREEN, True)
-        self.text(f'第 {self.game.level_index+1} 关 · {LEVELS[self.game.level_index]["name"]}',
+        self.text(f'第 {self.game.level_index+1} 关 · {level["name"]} · {rules["label"]}',
                   (cx,185), 38, INK, True)
         self.panel((230,249,580,260), 'white', LINE, 24)
-        for i, line in enumerate(['点击前方畅通的箭头，让它飞出棋盘。',
-                                  '每关限时 35 秒，拥有 3 次失误机会。',
-                                  '获得 A 或 B，解锁下一关。']):
+        for i, line in enumerate([f'点击前方畅通的箭头，让它飞出棋盘。',
+                                  f'本关限时 {rules["time_limit"]:.0f} 秒，拥有 3 次失误机会。',
+                                  '达到 B 或 A，解锁下一关。']):
             self.text(line, (cx,291+i*43), 21, INK, True)
-        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (cx,443), 21, GREEN, True)
-        self.text('超过 35 秒或失误机会用尽，本关失败。', (cx,483), 17, MUTED, True)
+        self.text(f'A ≤{rules["A"]:.0f}秒   /   B ≤{rules["B"]:.0f}秒   /   C ≤{rules["C"]:.0f}秒',
+                  (cx,443), 21, GREEN, True)
+        self.text(f'超过 {rules["time_limit"]:.0f} 秒或失误机会用尽，本关失败。', (cx,483), 17, MUTED, True)
         self.button('begin', '开始挑战', (350,550,340,64), True)
         self.text('点击“开始挑战”后计时，现在可放心阅读规则。', (cx,645), 17, MUTED, True)
         self.button('select', '返回选关', (64, 40, 140,44))
@@ -437,31 +445,37 @@ class App:
         self.text('ARROW / SELECT', (64, 39), 16, GREEN)
         self.text('选择关卡', (60, 82), 49)
         self.text('选择关卡，挑战更好的自己。', (64, 158), 21, MUTED)
-        self.text('每关 35 秒 · A ≤15秒 / B ≤25秒 / C ≤35秒', (64, 213), 19, GREEN)
-        self.text('前一关达到 A 或 B，即可永久解锁下一关。', (64, 248), 19, MUTED)
+        self.text('每关按难度配置限时与评级，前一关达到 A 或 B 才能解锁下一关。',
+                  (64, 213), 19, GREEN)
+        self.text('已解锁关卡可反复挑战，刷新自己的最佳评价。', (64, 248), 19, MUTED)
+        card_width, card_height = 452, 130
         for i, level in enumerate(LEVELS):
-            x = 64 + i*310
+            rules = level_rules(level)
+            column, row = i % 2, i // 2
+            x = 64 + column * 476
+            y = 275 + row * 145
             unlocked = self.game.progress.unlocked(i)
-            self.panel((x, 311, 290, 279), 'white' if unlocked else '#E7EAE2', LINE)
-            self.text(f'关卡 {i+1:02d}', (x+23, 333), 17, GREEN if unlocked else MUTED)
-            self.text(level['name'], (x+23, 368), 28)
+            self.panel((x, y, card_width, card_height), 'white' if unlocked else '#E7EAE2', LINE)
+            self.text(f'关卡 {i+1:02d}', (x+20, y+17), 16, GREEN if unlocked else MUTED)
+            self.text(level['name'], (x+20, y+43), 23)
+            self.text(f'{rules["label"]} · A≤{rules["A"]:.0f}s / B≤{rules["B"]:.0f}s / C≤{rules["C"]:.0f}s',
+                      (x+20, y+77), 14, GREEN if unlocked else MUTED)
             best = self.game.progress.best[i]
             if best is not None:
-                self.text(f'最佳 {time_grade(best)}  ·  {best:.2f} 秒', (x+23, 429), 22, GREEN)
+                self.text(f'最佳 {time_grade(best, rules)} · {best:.2f} 秒', (x+20, y+106), 14, GREEN)
             else:
-                self.text('尚未挑战' if unlocked else '尚未解锁', (x+23, 429), 22, MUTED)
+                self.text('尚未挑战' if unlocked else '尚未解锁', (x+20, y+106), 14, MUTED)
             if unlocked:
-                self.text('反复挑战，刷新最佳成绩', (x+23, 471), 16, MUTED)
                 self.button(f'level_{i}', '再次挑战' if best is not None else '开始挑战',
-                            (x+23, 517, 244, 48), True)
+                            (x+282, y+78, 150, 40), True)
             else:
-                self.text(f'需要第 {i} 关获得 A 或 B', (x+23, 471), 16, MUTED)
-                self.panel((x+23, 517, 244, 48), '#DADFD5', radius=12)
-                self.text('未解锁', (x+145, 541), 19, MUTED, True)
-        self.button('menu', '返回首页', (64, 628, 240, 51))
-        self.text('已解锁关卡始终可选，较低成绩不会覆盖最佳成绩。', (333, 642), 17, MUTED)
+                required = level_rules(LEVELS[i-1])['B'] if i else 0
+                self.panel((x+282, y+78, 150, 40), '#DADFD5', radius=12)
+                self.text(f'需前关 B≤{required:.0f}s', (x+357, y+98), 14, MUTED, True)
+        self.button('menu', '返回首页', (64, 714, 180, 40))
+        self.text('更高难度会提供更长限时，但评级要求仍需完成得足够快。', (300, 728), 16, MUTED)
         if self.game.progress.message:
-            self.text(self.game.progress.message, (64, 706), 17, '#B95D43')
+            self.text(self.game.progress.message, (64, 750), 15, '#B95D43')
 
     def draw_board(self):
         self.panel((48,171,586,520), 'white', LINE, 26)
@@ -505,10 +519,11 @@ class App:
     def draw_playing(self):
         g=self.game
         level=LEVELS[g.level_index]
+        rules = level_rules(level)
         self.text('一箭又一箭', (48,31), 31)
         self.text('ARROW BY ARROW', (50,80), 12, MUTED)
         self.text(f'关卡 {g.level_index+1:02d} / {len(LEVELS):02d}', (48,124), 20, GREEN)
-        self.text(level['name'], (225,124), 20)
+        self.text(f'{level["name"]} · {rules["label"]}', (225,124), 20)
         self.button('menu','返回首页',(852,40,140,44))
         self.draw_board()
         self.panel((662,171,330,201), 'white', LINE)
@@ -522,10 +537,11 @@ class App:
         self.text(f'剩余失误机会   {g.mistakes} / {g.max_mistakes}',(686,325),18,
                   '#B95D43' if g.mistakes<=1 else GREEN)
         self.panel((662,392,330,135), '#E7EBDD')
-        time_color = '#B95D43' if g.elapsed > 25 else GREEN
+        time_color = '#B95D43' if g.elapsed > rules['B'] else GREEN
         self.text(f'用时 {g.elapsed:.2f} 秒', (686,409), 24, time_color)
-        self.text(f'剩余 {max(0, TIME_LIMIT-g.elapsed):.2f} 秒', (686,450), 18, time_color)
-        self.text('A ≤15s  /  B ≤25s  /  C ≤35s', (686,487), 16, MUTED)
+        self.text(f'剩余 {max(0, rules["time_limit"]-g.elapsed):.2f} 秒', (686,450), 18, time_color)
+        self.text(f'A ≤{rules["A"]:.0f}s  /  B ≤{rules["B"]:.0f}s  /  C ≤{rules["C"]:.0f}s',
+                  (686,487), 16, MUTED)
         self.button('hint','提示  H',(662,550,156,49))
         self.button('restart','重新开始  R',(834,550,158,49))
         self.text('提示不会扣除失误机会', (662,616), 16, MUTED)
@@ -539,13 +555,15 @@ class App:
         self.buttons.clear()
         self.panel((280,180,480,395),'#FAFBF6',radius=28)
         state=self.game.state
+        rules = level_rules(LEVELS[self.game.level_index])
         won=state!='GAME_OVER'
         title={'LEVEL_CLEAR':'通路已打开！','ALL_CLEAR':'全部通关！','GAME_OVER':'再观察一次吧'}[state]
         self.text(f'评价 {self.game.grade}' if won else 'TRY AGAIN',(520,230),16,GREEN if won else '#B95D43',True)
         self.text(title,(520,291),36,INK,True)
         subtitle=(f'已完成全部 {len(LEVELS)} 个关卡。' if state=='ALL_CLEAR' else
                   ('达到 B 及以上，已解锁下一关。' if self.game.grade in ('A','B') else
-                   '本次为 C，重试达到 B 可进入下一关。') if won else '超过 35 秒，时间已用完。' if self.game.failure_reason == 'timeout' else
+                   '本次为 C，重试达到 B 可进入下一关。') if won else
+                  f'超过 {rules["time_limit"]:.0f} 秒，时间已用完。' if self.game.failure_reason == 'timeout' else
                   '失误机会已用完，重新挑战本关。')
         self.text(subtitle,(520,350),19,MUTED,True)
         self.text(f'本关用时 {self.game.elapsed:.2f} 秒  ·  提示 {self.game.used_hints} 次',(520,385),16,MUTED,True)

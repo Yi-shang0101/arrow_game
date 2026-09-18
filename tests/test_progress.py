@@ -75,3 +75,30 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(p.best,[None]*3)
         self.assertFalse(p.unlocked(-1))
         self.assertFalse(p.unlocked(3))
+
+    def test_difficulty_specific_B_threshold_unlocks_next_level(self):
+        levels = [
+            {'difficulty': 'normal', 'board': [['U']]},
+            {'difficulty': 'hard', 'board': [['U']]},
+            {'difficulty': 'expert', 'board': [['U']]},
+        ]
+        g = Game(levels)
+        g.start(); self.clear(g, 25.001)
+        self.assertEqual(g.grade, 'C')
+        self.assertFalse(g.progress.unlocked(1))
+        g.restart(); self.clear(g, 25)
+        self.assertTrue(g.progress.unlocked(1))
+        self.assertTrue(g.start(1))
+        self.clear(g, 40)
+        self.assertEqual(g.grade, 'B')
+        self.assertTrue(g.progress.unlocked(2))
+
+    def test_old_three_level_save_migrates_when_new_levels_are_added(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'progress.json'
+            path.write_text(json.dumps({'version': 1, 'best_times': [10, 20, 30]}))
+            p = Progress(5, path,
+                         time_limits=[35, 35, 35, 55, 75],
+                         unlock_times=[25, 25, 25, 40, 55])
+            self.assertEqual(p.best, [10, 20, 30, None, None])
+            self.assertFalse(p.unlocked(3))

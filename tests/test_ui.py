@@ -29,16 +29,17 @@ class UITests(unittest.TestCase):
 
     def tearDown(self): pygame.quit()
 
-    def test_mouse_three_level_playthrough(self):
+    def test_mouse_five_level_playthrough(self):
         self.button('start')
         for i,level in enumerate(LEVELS):
             self.assertEqual(self.app.game.level_index,i)
             for r,c in solve(level['board']):
                 self.click(self.app.cell_center(r,c))
                 self.finish_animation()
-            self.assertEqual(self.app.game.state,'ALL_CLEAR' if i==2 else 'LEVEL_CLEAR')
+            self.assertEqual(self.app.game.state,
+                             'ALL_CLEAR' if i==len(LEVELS)-1 else 'LEVEL_CLEAR')
             self.button('continue')
-        self.assertEqual(self.app.game.level_index,2)
+        self.assertEqual(self.app.game.level_index,len(LEVELS)-1)
         self.assertEqual(self.app.game.state,'PLAYING')
 
     def test_fail_restart_outside_hint_and_home(self):

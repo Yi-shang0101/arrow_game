@@ -19,14 +19,17 @@ test_four_directions_distant_blockers (test_logic.RuleTests.test_four_directions
 test_invalid_and_empty (test_logic.RuleTests.test_invalid_and_empty) ... ok
 test_C_blocked_B_unlocks_and_next_resets (test_progress.ProgressTests.test_C_blocked_B_unlocks_and_next_resets) ... ok
 test_corrupt_save_safe_fallback (test_progress.ProgressTests.test_corrupt_save_safe_fallback) ... ok
+test_difficulty_specific_B_threshold_unlocks_next_level (test_progress.ProgressTests.test_difficulty_specific_B_threshold_unlocks_next_level) ... ok
 test_initial_locks_and_start_guard (test_progress.ProgressTests.test_initial_locks_and_start_guard) ... ok
 test_locked_record_cannot_unlock_chain (test_progress.ProgressTests.test_locked_record_cannot_unlock_chain) ... ok
+test_old_three_level_save_migrates_when_new_levels_are_added (test_progress.ProgressTests.test_old_three_level_save_migrates_when_new_levels_are_added) ... ok
 test_replay_keeps_best_and_unlock (test_progress.ProgressTests.test_replay_keeps_best_and_unlock) ... ok
 test_roundtrip_persists_best (test_progress.ProgressTests.test_roundtrip_persists_best) ... ok
 test_save_failure_retains_in_memory_progress (test_progress.ProgressTests.test_save_failure_retains_in_memory_progress) ... ok
 test_animation_and_idle_both_count (test_timer.TimerTests.test_animation_and_idle_both_count) ... ok
 test_finish_exact_boundary_even_slow_frame (test_timer.TimerTests.test_finish_exact_boundary_even_slow_frame) ... ok
 test_grade_boundaries (test_timer.TimerTests.test_grade_boundaries) ... ok
+test_harder_levels_use_longer_difficulty_thresholds (test_timer.TimerTests.test_harder_levels_use_longer_difficulty_thresholds) ... ok
 test_menu_no_time_and_hint_does_not_pause (test_timer.TimerTests.test_menu_no_time_and_hint_does_not_pause) ... ok
 test_restart_and_next_reset (test_timer.TimerTests.test_restart_and_next_reset) ... ok
 test_third_level_animation_budget_allows_A (test_timer.TimerTests.test_third_level_animation_budget_allows_A) ... ok
@@ -35,12 +38,12 @@ test_timeout_idle_strictly_after_35 (test_timer.TimerTests.test_timeout_idle_str
 test_fail_restart_outside_hint_and_home (test_ui.UITests.test_fail_restart_outside_hint_and_home) ... ok
 test_home_selection_and_C_retry (test_ui.UITests.test_home_selection_and_C_retry) ... ok
 test_home_selection_back_and_timer_stopped (test_ui.UITests.test_home_selection_back_and_timer_stopped) ... ok
-test_mouse_three_level_playthrough (test_ui.UITests.test_mouse_three_level_playthrough) ... ok
+test_mouse_five_level_playthrough (test_ui.UITests.test_mouse_five_level_playthrough) ... ok
 test_ready_screen_waits_for_confirmation (test_ui.UITests.test_ready_screen_waits_for_confirmation) ... ok
 test_settings_sliders_themes_and_home_navigation (test_ui.UITests.test_settings_sliders_themes_and_home_navigation) ... ok
 test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
 
 ----------------------------------------------------------------------
-Ran 41 tests in 3.249s
+Ran 44 tests in 7.195s
 
 OK

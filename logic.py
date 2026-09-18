@@ -6,14 +6,26 @@ TIME_LIMIT = 35.0
 EXIT_DURATION = 0.25
 BUMP_DURATION = 0.38
 
+DIFFICULTY_RULES = {
+    'normal': {'label': '普通', 'A': 15.0, 'B': 25.0, 'C': 35.0, 'time_limit': 35.0},
+    'hard': {'label': '困难', 'A': 25.0, 'B': 40.0, 'C': 55.0, 'time_limit': 55.0},
+    'expert': {'label': '专家', 'A': 35.0, 'B': 55.0, 'C': 75.0, 'time_limit': 75.0},
+}
 
-def time_grade(seconds):
-    """只按通关耗时评级；超过限时无评级。"""
-    if seconds <= 15:
+
+def level_rules(level):
+    """根据关卡难度返回评级与限时规则；旧关卡默认使用普通难度。"""
+    return DIFFICULTY_RULES.get(level.get('difficulty', 'normal'), DIFFICULTY_RULES['normal'])
+
+
+def time_grade(seconds, rules=None):
+    """按当前难度的耗时阈值评级；超过该难度限时无评级。"""
+    rules = rules or DIFFICULTY_RULES['normal']
+    if seconds <= rules['A']:
         return "A"
-    if seconds <= 25:
+    if seconds <= rules['B']:
         return "B"
-    if seconds <= TIME_LIMIT:
+    if seconds <= rules['C']:
         return "C"
     return None
 
@@ -77,7 +89,14 @@ class Game:
     """逻辑状态和动画事务；飞出完成后才删除，动画期间不接受棋盘点击。"""
     def __init__(self, levels, mistakes=3, progress=None):
         self.levels = levels
-        self.progress = progress if progress is not None else Progress(len(levels))
+        time_limits = [level_rules(level)['time_limit'] for level in levels]
+        unlock_times = [level_rules(level)['B'] for level in levels]
+        if progress is None:
+            progress = Progress(len(levels), time_limits=time_limits,
+                                unlock_times=unlock_times)
+        else:
+            progress.configure(time_limits=time_limits, unlock_times=unlock_times)
+        self.progress = progress
         self.max_mistakes = mistakes
         self.level_index = 0
         self.state = "MENU"
@@ -94,6 +113,14 @@ class Game:
     @property
     def remaining(self):
         return sum(cell is not None for row in self.board for cell in row)
+
+    @property
+    def level_rules(self):
+        return level_rules(self.levels[self.level_index])
+
+    @property
+    def time_limit(self):
+        return self.level_rules['time_limit']
 
     def start(self, index=0):
         if not 0 <= index < len(self.levels):
@@ -163,7 +190,7 @@ class Game:
                                   or (animation.kind == "bump" and self.mistakes == 0))
         advance = min(dt, max(0.0, duration-animation.elapsed)) if terminal else dt
         self.elapsed = round(self.elapsed + advance, 9)
-        if self.elapsed > TIME_LIMIT:
+        if self.elapsed > self.time_limit:
             self.state = "GAME_OVER"
             self.failure_reason = "timeout"
             self.animation = None
@@ -181,8 +208,8 @@ class Game:
         if animation.kind == "exit":
             self.board[animation.row][animation.col] = None
             if self.remaining == 0:
-                self.grade = time_grade(self.elapsed)
-                self.progress.record(self.level_index, self.elapsed)
+                self.grade = time_grade(self.elapsed, self.level_rules)
+                self.progress.record(self.level_index, self.elapsed, self.time_limit)
                 self.state = "ALL_CLEAR" if self.level_index == len(self.levels)-1 else "LEVEL_CLEAR"
         elif self.mistakes == 0:
             self.failure_reason = "mistakes"

@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import pygame
 from main import App
-from logic import can_exit, solve
+from logic import EXIT_DURATION, can_exit, solve
 
 out=Path(__file__).resolve().parent
 app=App(save_path=None)
@@ -34,15 +34,23 @@ app.start(0)
 app.action('begin')
 for r,c in solve(app.game.board):
     app.game.click(r,c)
-    app.game.update(1)
+    app.game.update(EXIT_DURATION)
 capture('05_clear.png')
-app.game.progress.record(1,10)
+app.start(1)
+app.action('begin')
+for r,c in solve(app.game.board):
+    app.game.click(r,c)
+    app.game.update(EXIT_DURATION)
 app.start(2)
 app.action('begin')
 capture('06_level3.png')
-for r,c in solve(app.game.board):
-    app.game.click(r,c)
-    app.game.update(1)
+for index in range(2, len(app.game.levels)):
+    if index > 2:
+        app.start(index)
+        app.action('begin')
+    for r,c in solve(app.game.board):
+        app.game.click(r,c)
+        app.game.update(EXIT_DURATION)
 capture('07_all_clear.png')
 app.start(1)
 app.action('begin')
