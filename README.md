@@ -109,19 +109,6 @@ python3.12 -m venv .venv
 ![设置界面（白天）](docs/13_settings_day.png)
 ![设置界面（夜间）](docs/14_settings_night.png)
 
-## 测试
-
-在项目目录执行：
-
-```sh
-python -m unittest discover -s tests -v
-```
-
-48 项测试已在 Linux / Python 3.12.14 / pygame-ce 2.5.8 环境通过。界面测试使用 SDL dummy 驱动和模拟鼠标事件，可在无桌面环境运行；覆盖五关完整通关、难度评级阈值、难度解锁、旧存档迁移、失败重开、重复点击、中途重开、结果页返回首页、随机失败音效、设置页交互、用户指定字体加载、当前关卡自动求解和首页背景箭头交互。
-
-原始输出见 `docs/test_output.txt`。自动化测试不替代本人试玩：Windows 桌面实机运行、主观动画流畅度以及每关人工试玩，需下载后确认。
-
-重新生成截图：`python docs/capture_demo.py`。
 
 
 
