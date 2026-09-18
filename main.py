@@ -113,9 +113,9 @@ class App:
                   (229,625,'D',34), (888,135,'R',44), (805,307,'D',32),
                   (932,458,'U',42), (835,647,'L',34)]
         for x,y,d,length in motifs:
-            self.arrow((x,y), d, '#DEE5DA', length, 4)
+            self.arrow((x,y), d, '#92B49D', length, 5)
         for x,y in [(178,372),(862,535),(270,126),(939,276),(117,649),(774,184)]:
-            pygame.draw.circle(self.screen, '#E0E6DC', (x,y), 3)
+            pygame.draw.circle(self.screen, '#B2C7AF', (x,y), 4)
         cx = WIDTH//2
         self.text('ARROW BY ARROW', (cx,89), 15, GREEN, True)
         self.text('观察方向，找到出口。', (cx,146), 21, MUTED, True)
