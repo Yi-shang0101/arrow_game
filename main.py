@@ -6,7 +6,7 @@ from pathlib import Path
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame
 from levels import LEVELS
-from logic import DIRECTIONS, Game
+from logic import DIRECTIONS, Game, TIME_LIMIT, EXIT_DURATION, BUMP_DURATION
 
 ROOT = Path(__file__).resolve().parent
 WIDTH, HEIGHT = 1040, 760
@@ -97,8 +97,9 @@ class App:
         self.text('一场关于顺序的小小解谜', (64, 293), 24, GREEN)
         for i, line in enumerate(['点击前方畅通的箭头，让它飞出棋盘。',
                                   '被其他箭头挡住？你有 3 次失误机会。',
-                                  '清空所有箭头，解锁下一关。']):
+                                  '每关限时 35 秒，超时即挑战失败。']):
             self.text(line, (66, 365+i*40), 20, MUTED)
+        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (66, 489), 18, GREEN)
         self.button('start', '开始挑战', (64, 534, 234, 58), True)
         self.text('3 个原创关卡   /   鼠标操作   /   轻量解谜', (65, 619), 16, MUTED)
         self.panel((626, 159, 342, 397), '#E6EBDF', radius=32)
@@ -132,7 +133,7 @@ class App:
             x,y=self.cell_center(animation.row,animation.col)
             dr,dc=DIRECTIONS[animation.direction]
             if animation.kind=='exit':
-                t=min(1,animation.elapsed/.58)
+                t=min(1,animation.elapsed/EXIT_DURATION)
                 if dc==1: distance=self.board_rect.right-x+self.cell
                 elif dc==-1: distance=x-self.board_rect.left+self.cell
                 elif dr==1: distance=self.board_rect.bottom-y+self.cell
@@ -140,7 +141,7 @@ class App:
                 offset=distance*t*t
                 color=COLORS[animation.direction]
             else:
-                t=min(1,animation.elapsed/.38)
+                t=min(1,animation.elapsed/BUMP_DURATION)
                 offset=math.sin(t*math.pi)*self.cell*.17
                 color='#CE684D'
             old_clip=self.screen.get_clip()
@@ -168,12 +169,10 @@ class App:
         self.text(f'剩余失误机会   {g.mistakes} / {g.max_mistakes}',(686,325),18,
                   '#B95D43' if g.mistakes<=1 else GREEN)
         self.panel((662,392,330,135), '#E7EBDD')
-        self.text('观察一下', (686,411), 18, GREEN)
-        # 固定短文案，不依赖自动换行。
-        messages=[['先找朝向边界的箭头，','逐步打开通路。'],
-                  ['空格不代表畅通，','留意整行与整列。'],
-                  ['从外围开始观察，','让阻挡逐层消失。']][g.level_index]
-        for i,line in enumerate(messages): self.text(line,(686,447+i*28),18)
+        time_color = '#B95D43' if g.elapsed > 25 else GREEN
+        self.text(f'用时 {g.elapsed:.2f} 秒', (686,409), 24, time_color)
+        self.text(f'剩余 {max(0, TIME_LIMIT-g.elapsed):.2f} 秒', (686,450), 18, time_color)
+        self.text('A ≤15s  /  B ≤25s  /  C ≤35s', (686,487), 16, MUTED)
         self.button('hint','提示  H',(662,550,156,49))
         self.button('restart','重新开始  R',(834,550,158,49))
         self.text('提示不会扣除失误机会', (662,616), 16, MUTED)
@@ -189,12 +188,13 @@ class App:
         state=self.game.state
         won=state!='GAME_OVER'
         title={'LEVEL_CLEAR':'通路已打开！','ALL_CLEAR':'全部通关！','GAME_OVER':'再观察一次吧'}[state]
-        self.text('CLEAR' if won else 'TRY AGAIN',(520,230),16,GREEN if won else '#B95D43',True)
+        self.text(f'评价 {self.game.grade}' if won else 'TRY AGAIN',(520,230),16,GREEN if won else '#B95D43',True)
         self.text(title,(520,291),36,INK,True)
         subtitle=(f'已完成全部 {len(LEVELS)} 个关卡。' if state=='ALL_CLEAR' else
-                  '本关箭头已全部飞出。' if won else '失误机会已用完，重新挑战本关。')
+                  '本关箭头已全部飞出。' if won else '超过 35 秒，时间已用完。' if self.game.failure_reason == 'timeout' else
+                  '失误机会已用完，重新挑战本关。')
         self.text(subtitle,(520,350),19,MUTED,True)
-        self.text(f'本关使用提示 {self.game.used_hints} 次',(520,385),16,MUTED,True)
+        self.text(f'本关用时 {self.game.elapsed:.2f} 秒  ·  提示 {self.game.used_hints} 次',(520,385),16,MUTED,True)
         label='下一关' if state=='LEVEL_CLEAR' else '从第一关开始' if state=='ALL_CLEAR' else '重新挑战'
         self.button('continue',label,(320,432,190,55),True)
         self.button('menu','返回首页',(530,432,190,55))
@@ -244,12 +244,14 @@ class App:
     def run(self):
         self.draw()
         while self.running:
-            dt=min(self.clock.tick(60)/1000, .05)
+            # 不截断 dt：低帧率、窗口拖动等期间也必须累计实际经过时间。
+            dt=self.clock.tick(60)/1000
+            self.game.update(dt)
+            self.draw()  # 超时后先更新结果页按钮，再处理鼠标事件。
             for event in pygame.event.get():
                 self.handle_event(event)
                 # 同一帧内状态变化后，立即更新按钮集合，避免旧按钮响应。
                 if event.type in (pygame.KEYDOWN,pygame.MOUSEBUTTONDOWN): self.draw()
-            self.game.update(dt)
             self.draw()
         pygame.quit()
 

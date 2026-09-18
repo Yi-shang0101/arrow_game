@@ -1,6 +1,22 @@
 """不依赖图形库的游戏规则。坐标统一为 (row, col)。"""
 from dataclasses import dataclass
 
+TIME_LIMIT = 35.0
+EXIT_DURATION = 0.25
+BUMP_DURATION = 0.38
+
+
+def time_grade(seconds):
+    """只按通关耗时评级；超过限时无评级。"""
+    if seconds <= 15:
+        return "A"
+    if seconds <= 25:
+        return "B"
+    if seconds <= TIME_LIMIT:
+        return "C"
+    return None
+
+
 DIRECTIONS = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}
 
 
@@ -69,6 +85,9 @@ class Game:
         self.hint = None
         self.hint_time = 0.0
         self.used_hints = 0
+        self.elapsed = 0.0
+        self.grade = None
+        self.failure_reason = None
 
     @property
     def remaining(self):
@@ -86,6 +105,9 @@ class Game:
         self.hint = None
         self.hint_time = 0.0
         self.used_hints = 0
+        self.elapsed = 0.0
+        self.grade = None
+        self.failure_reason = None
         self.state = "PLAYING"
 
     def restart(self):
@@ -125,20 +147,37 @@ class Game:
             self.used_hints += 1
 
     def update(self, dt):
-        self.hint_time = max(0.0, self.hint_time - dt)
+        if dt < 0:
+            raise ValueError("时间间隔不能为负数")
+        if self.state != "PLAYING":
+            return
+        # 最后一支箭头可能在本帧结束之前飞完，按实际完成时刻结算。
+        animation = self.animation
+        duration = EXIT_DURATION if animation and animation.kind == "exit" else BUMP_DURATION
+        terminal = animation and ((animation.kind == "exit" and self.remaining == 1)
+                                  or (animation.kind == "bump" and self.mistakes == 0))
+        advance = min(dt, max(0.0, duration-animation.elapsed)) if terminal else dt
+        self.elapsed = round(self.elapsed + advance, 9)
+        if self.elapsed > TIME_LIMIT:
+            self.state = "GAME_OVER"
+            self.failure_reason = "timeout"
+            self.animation = None
+            self.hint = None
+            return
+        self.hint_time = max(0.0, self.hint_time - advance)
         if self.hint_time == 0:
             self.hint = None
-        if not self.animation:
+        if not animation:
             return
-        self.animation.elapsed += dt
-        duration = 0.58 if self.animation.kind == "exit" else 0.38
-        if self.animation.elapsed < duration:
+        animation.elapsed = round(animation.elapsed + advance, 9)
+        if animation.elapsed < duration:
             return
-        animation = self.animation
         self.animation = None
         if animation.kind == "exit":
             self.board[animation.row][animation.col] = None
             if self.remaining == 0:
+                self.grade = time_grade(self.elapsed)
                 self.state = "ALL_CLEAR" if self.level_index == len(self.levels)-1 else "LEVEL_CLEAR"
         elif self.mistakes == 0:
+            self.failure_reason = "mistakes"
             self.state = "GAME_OVER"

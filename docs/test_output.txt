@@ -9,10 +9,19 @@ test_all_levels_solvable_and_four_directions (test_logic.RuleTests.test_all_leve
 test_deadlock (test_logic.RuleTests.test_deadlock) ... ok
 test_four_directions_distant_blockers (test_logic.RuleTests.test_four_directions_distant_blockers) ... ok
 test_invalid_and_empty (test_logic.RuleTests.test_invalid_and_empty) ... ok
+test_animation_and_idle_both_count (test_timer.TimerTests.test_animation_and_idle_both_count) ... ok
+test_finish_exact_boundary_even_slow_frame (test_timer.TimerTests.test_finish_exact_boundary_even_slow_frame) ... ok
+test_grade_boundaries (test_timer.TimerTests.test_grade_boundaries) ... ok
+test_menu_no_time_and_hint_does_not_pause (test_timer.TimerTests.test_menu_no_time_and_hint_does_not_pause) ... ok
+test_restart_and_next_reset (test_timer.TimerTests.test_restart_and_next_reset) ... ok
+test_third_level_animation_budget_allows_A (test_timer.TimerTests.test_third_level_animation_budget_allows_A) ... ok
+test_timeout_during_exit (test_timer.TimerTests.test_timeout_during_exit) ... ok
+test_timeout_idle_strictly_after_35 (test_timer.TimerTests.test_timeout_idle_strictly_after_35) ... ok
 test_fail_restart_outside_hint_and_home (test_ui.UITests.test_fail_restart_outside_hint_and_home) ... ok
 test_mouse_three_level_playthrough (test_ui.UITests.test_mouse_three_level_playthrough) ... ok
+test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
 
 ----------------------------------------------------------------------
-Ran 13 tests in 2.266s
+Ran 22 tests in 2.158s
 
 OK

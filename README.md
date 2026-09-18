@@ -4,12 +4,12 @@
 
 ## 安装与运行
 
-建议使用 Python 3.12（本项目实测版本为 3.12.14），依赖 Pygame 2.6.1。需要图形桌面和鼠标。解压整个项目，保留 `assets` 文件夹；不要在压缩包内直接打开程序。
+可使用 Python 3.12 或 3.14（本次自动化实测版本为 3.12.14），依赖 pygame-ce 2.5.8。需要图形桌面和鼠标。解压整个项目，保留 `assets` 文件夹；不要在压缩包内直接打开程序。
 
 Windows：打开项目文件夹，在地址栏输入 `cmd` 并回车，然后执行：
 
 ```bat
-py -3.12 -m venv .venv
+python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 .venv\Scripts\python main.py
 ```
@@ -30,6 +30,19 @@ python3.12 -m venv .venv
 ```
 
 第一次安装依赖需要网络；之后游戏可离线运行，不调用 AI API，不需要密钥。
+
+## 限时评级（每关独立）
+
+| 完成耗时 t | 结果 |
+| --- | --- |
+| t ≤ 15 秒 | A |
+| 15 < t ≤ 25 秒 | B |
+| 25 < t ≤ 35 秒 | C |
+| t > 35 秒 | 立即失败 |
+
+进入关卡时开始计时，最后一支箭头飞出动画完成时结算。观察、提示、碰撞、飞出动画及窗口失去焦点期间均计时，不提供暂停；结果页停止计时。重开和下一关归零。仍保留 3 次失误机制，失误耗尽也会失败。界面显示两位小数，判断使用未格式化的时间，边界按上述规则执行。
+
+飞出动画缩短到每支 0.25 秒，使第三关 30 支箭头的理论最短动画耗时为 7.5 秒，A 评级在规则上可达。
 
 ## 操作与规则
 
@@ -52,7 +65,8 @@ python3.12 -m venv .venv
 | `logic.py` | 路径检测、求解器、游戏状态与动画事务 |
 | `levels.py` | 三个固定关卡 |
 | `tests/test_logic.py` | 11 项核心规则测试 |
-| `tests/test_ui.py` | 2 项界面事件流程测试 |
+| `tests/test_timer.py` | 8 项计时、评级边界和超时测试 |
+| `tests/test_ui.py` | 3 项界面事件流程测试 |
 | `assets/` | 中文字体及字体许可证 |
 | `docs/` | 截图、开发记录、测试报告、PSP 表与通关顺序 |
 
@@ -62,7 +76,7 @@ python3.12 -m venv .venv
 
 ## 游戏截图
 
-截图由实际 Pygame 画面生成。
+截图由实际 pygame-ce 画面生成。
 
 ![开始界面](docs/01_menu.png)
 ![游戏界面](docs/02_game.png)
@@ -77,7 +91,7 @@ python3.12 -m venv .venv
 python -m unittest discover -s tests -v
 ```
 
-13 项测试已在 Linux / Python 3.12.14 / Pygame 2.6.1 环境通过。界面测试使用 SDL dummy 驱动和模拟鼠标事件，可在无桌面环境运行；覆盖三关完整通关、失败重开、重复点击和中途重开。
+22 项测试已在 Linux / Python 3.12.14 / pygame-ce 2.5.8 环境通过。界面测试使用 SDL dummy 驱动和模拟鼠标事件，可在无桌面环境运行；覆盖三关完整通关、失败重开、重复点击和中途重开。
 
 原始输出见 `docs/test_output.txt`。自动化测试不替代本人试玩：Windows 桌面实机运行、主观动画流畅度以及每关人工试玩，需下载后确认。
 

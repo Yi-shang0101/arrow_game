@@ -64,4 +64,19 @@ class UITests(unittest.TestCase):
         self.button('menu')
         self.assertEqual(g.state,'MENU')
 
+    def test_timeout_result_restart_and_grade_render(self):
+        self.button('start')
+        self.app.game.update(35.001)
+        self.app.draw()
+        self.assertEqual(self.app.game.failure_reason,'timeout')
+        self.assertIn('continue',self.app.buttons)
+        self.button('continue')
+        self.assertEqual(self.app.game.elapsed,0)
+        for r,c in solve(self.app.game.board):
+            self.click(self.app.cell_center(r,c))
+            self.app.game.update(.25)
+            self.app.draw()
+        self.assertEqual(self.app.game.grade,'A')
+        self.assertIn('continue',self.app.buttons)
+
 if __name__=='__main__': unittest.main()
