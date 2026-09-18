@@ -17,7 +17,10 @@ class UITests(unittest.TestCase):
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN,button=1,pos=pos))
         self.app.draw()
 
-    def button(self,key): self.click(self.app.buttons[key].center)
+    def button(self,key):
+        self.click(self.app.buttons[key].center)
+        if self.app.game.state == 'READY':
+            self.click(self.app.buttons['begin'].center)
 
     def finish_animation(self):
         for _ in range(40):
@@ -120,5 +123,24 @@ class UITests(unittest.TestCase):
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_ESCAPE))
         self.app.draw()
         self.assertEqual(self.app.game.state,'MENU')
+
+    def test_ready_screen_waits_for_confirmation(self):
+        self.assertGreater(self.app.buttons['start'].width,self.app.buttons['select'].width)
+        self.assertGreater(self.app.buttons['start'].height,self.app.buttons['select'].height)
+        self.click(self.app.buttons['start'].center)
+        self.assertEqual(self.app.game.state,'READY')
+        self.app.game.update(60)
+        self.assertEqual(self.app.game.elapsed,0)
+        self.assertEqual(self.app.game.click(0,1),'ignored')
+        self.app.handle_event(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_RETURN))
+        self.app.draw()
+        self.assertEqual(self.app.game.state,'PLAYING')
+        self.app.game.update(1)
+        self.assertEqual(self.app.game.elapsed,1)
+        self.click(self.app.buttons['restart'].center)
+        self.assertEqual(self.app.game.state,'READY')
+        self.assertEqual(self.app.game.elapsed,0)
+        self.click(self.app.buttons['select'].center)
+        self.assertEqual(self.app.game.state,'SELECT')
 
 if __name__=='__main__': unittest.main()

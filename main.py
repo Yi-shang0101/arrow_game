@@ -89,19 +89,21 @@ class App:
     def start(self, index=0):
         if not self.game.start(index):
             return
+        self.game.state = 'READY'
         self.geometry()
         self.notice = '点击箭头，让通路逐渐打开。'
 
     def home_button(self, key, label, y):
-        """首页等宽纵向按钮；悬停时以绿色填充、描边和箭头强调。"""
-        rect = pygame.Rect(WIDTH//2-156, y, 312, 60)
+        """主按钮更大，悬停时以绿色填充、描边和箭头强调。"""
+        width, height = (360, 78) if key == 'start' else (280, 58)
+        rect = pygame.Rect((WIDTH-width)//2, y, width, height)
         self.buttons[key] = rect
         hover = rect.collidepoint(pygame.mouse.get_pos())
         if hover:
             self.panel(rect.inflate(10, 10), '#D5E5D7', radius=19)
         self.panel(rect, GREEN if hover else '#E5EBE1',
                    '#205F4B' if hover else '#CFDACD', radius=14)
-        self.text(label, rect.center, 22, 'white' if hover else INK, True)
+        self.text(label, rect.center, 27 if key == 'start' else 21, 'white' if hover else INK, True)
         if hover:
             self.arrow((rect.right-33, rect.centery), 'R', 'white', 18, 3)
 
@@ -119,16 +121,27 @@ class App:
         self.text('观察方向，找到出口。', (cx,146), 21, MUTED, True)
         self.text('一箭又一箭', (cx,221), 64, INK, True)
         self.text('一场关于顺序的小小解谜', (cx,292), 23, GREEN, True)
+        self.home_button('start', '开始游戏', 383)
+        self.home_button('select', '选择关卡', 485)
+        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (cx,614), 16, MUTED, True)
+        if self.game.progress.message:
+            self.text(self.game.progress.message, (cx,730), 16, '#B95D43', True)
+
+    def draw_ready(self):
+        cx = WIDTH//2
+        self.text('准备好了吗？', (cx,121), 22, GREEN, True)
+        self.text(f'第 {self.game.level_index+1} 关 · {LEVELS[self.game.level_index]["name"]}',
+                  (cx,185), 38, INK, True)
+        self.panel((230,249,580,260), 'white', LINE, 24)
         for i, line in enumerate(['点击前方畅通的箭头，让它飞出棋盘。',
                                   '每关限时 35 秒，拥有 3 次失误机会。',
                                   '获得 A 或 B，解锁下一关。']):
-            self.text(line, (cx,354+i*34), 19, MUTED, True)
-        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (cx,463), 17, GREEN, True)
-        self.home_button('start', '开始游戏', 508)
-        self.home_button('select', '选择关卡', 584)
-        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (cx,687), 16, MUTED, True)
-        if self.game.progress.message:
-            self.text(self.game.progress.message, (cx,730), 16, '#B95D43', True)
+            self.text(line, (cx,291+i*43), 21, INK, True)
+        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (cx,443), 21, GREEN, True)
+        self.text('超过 35 秒或失误机会用尽，本关失败。', (cx,483), 17, MUTED, True)
+        self.button('begin', '开始挑战', (350,550,340,64), True)
+        self.text('点击“开始挑战”后计时，现在可放心阅读规则。', (cx,645), 17, MUTED, True)
+        self.button('select', '返回选关', (64, 40, 140,44))
 
     def draw_selection(self):
         self.text('ARROW / SELECT', (64, 39), 16, GREEN)
@@ -258,6 +271,7 @@ class App:
         self.buttons.clear()
         if self.game.state=='MENU': self.draw_menu()
         elif self.game.state=='SELECT': self.draw_selection()
+        elif self.game.state=='READY': self.draw_ready()
         elif self.game.state=='PLAYING': self.draw_playing()
         else: self.draw_result()
         pygame.display.flip()
@@ -265,6 +279,9 @@ class App:
     def action(self, key):
         g=self.game
         if key=='start': self.start()
+        elif key=='begin' and g.state=='READY':
+            g.state='PLAYING'
+            self.clock.tick()  # 清除说明页的帧间隔，计时从确认后开始。
         elif key=='select':
             g.menu()
             g.state='SELECT'
@@ -287,7 +304,7 @@ class App:
             elif event.key==pygame.K_r and self.game.state=='PLAYING': self.action('restart')
             elif event.key==pygame.K_h and self.game.state=='PLAYING': self.action('hint')
             elif event.key==pygame.K_RETURN:
-                self.action('start' if self.game.state=='MENU' else 'continue')
+                self.action('start' if self.game.state=='MENU' else 'begin' if self.game.state=='READY' else 'continue')
         elif event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
             for key,rect in self.buttons.items():
                 if rect.collidepoint(event.pos):
