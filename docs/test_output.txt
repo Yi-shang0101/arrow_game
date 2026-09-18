@@ -26,10 +26,11 @@ test_timeout_during_exit (test_timer.TimerTests.test_timeout_during_exit) ... ok
 test_timeout_idle_strictly_after_35 (test_timer.TimerTests.test_timeout_idle_strictly_after_35) ... ok
 test_fail_restart_outside_hint_and_home (test_ui.UITests.test_fail_restart_outside_hint_and_home) ... ok
 test_home_selection_and_C_retry (test_ui.UITests.test_home_selection_and_C_retry) ... ok
+test_home_selection_back_and_timer_stopped (test_ui.UITests.test_home_selection_back_and_timer_stopped) ... ok
 test_mouse_three_level_playthrough (test_ui.UITests.test_mouse_three_level_playthrough) ... ok
 test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
 
 ----------------------------------------------------------------------
-Ran 30 tests in 2.242s
+Ran 31 tests in 2.313s
 
 OK

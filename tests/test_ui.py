@@ -80,10 +80,13 @@ class UITests(unittest.TestCase):
         self.assertIn('continue',self.app.buttons)
 
     def test_home_selection_and_C_retry(self):
+        self.assertIn('select',self.app.buttons)
+        self.assertNotIn('level_0',self.app.buttons)
+        self.button('select')
         self.assertIn('level_0',self.app.buttons)
         self.assertNotIn('level_1',self.app.buttons)
         self.app.action('level_1')
-        self.assertEqual(self.app.game.state,'MENU')
+        self.assertEqual(self.app.game.state,'SELECT')
         self.button('level_0')
         self.app.game.update(26)
         for r,c in solve(self.app.game.board):
@@ -95,12 +98,27 @@ class UITests(unittest.TestCase):
         for r,c in solve(self.app.game.board):
             self.click(self.app.cell_center(r,c))
             self.app.game.update(.25);self.app.draw()
-        self.button('menu')
+        self.button('select')
         self.assertIn('level_1',self.app.buttons)
         self.assertNotIn('level_2',self.app.buttons)
         self.button('level_1')
         self.assertEqual(self.app.game.level_index,1)
-        self.button('menu');self.button('level_0')
+        self.button('menu');self.button('select');self.button('level_0')
         self.assertEqual(self.app.game.level_index,0)
+
+    def test_home_selection_back_and_timer_stopped(self):
+        self.assertEqual(self.app.game.state,'MENU')
+        self.button('select')
+        self.assertEqual(self.app.game.state,'SELECT')
+        self.app.game.update(40)
+        self.assertEqual(self.app.game.elapsed,0)
+        self.button('menu')
+        self.assertEqual(self.app.game.state,'MENU')
+        self.assertIn('start',self.app.buttons)
+        self.assertNotIn('level_0',self.app.buttons)
+        self.button('select')
+        self.app.handle_event(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_ESCAPE))
+        self.app.draw()
+        self.assertEqual(self.app.game.state,'MENU')
 
 if __name__=='__main__': unittest.main()

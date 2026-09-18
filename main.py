@@ -93,8 +93,31 @@ class App:
         self.notice = '点击箭头，让通路逐渐打开。'
 
     def draw_menu(self):
+        self.text('ARROW / HOME', (64, 44), 17, GREEN)
+        self.text('观察方向，找到出口。', (64, 152), 22, MUTED)
+        self.text('一箭又一箭', (60, 194), 64)
+        self.text('一场关于顺序的小小解谜', (64, 293), 24, GREEN)
+        for i, line in enumerate(['点击前方畅通的箭头，让它飞出棋盘。',
+                                  '每关限时 35 秒，拥有 3 次失误机会。',
+                                  '获得 A 或 B，解锁下一关。']):
+            self.text(line, (66, 365+i*40), 20, MUTED)
+        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (66, 489), 18, GREEN)
+        self.button('start', '开始游戏', (64, 546, 218, 58), True)
+        self.button('select', '选择关卡', (302, 546, 218, 58))
+        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (65, 630), 17, MUTED)
+        self.panel((626, 159, 342, 397), '#E6EBDF', radius=32)
+        demo = [('U',0,0), ('R',0,2), ('L',1,0), ('D',1,1), ('U',1,2), ('R',2,1), ('D',2,2)]
+        for d,r,c in demo:
+            x,y = 657+c*98, 211+r*98
+            self.panel((x,y,84,84), 'white', radius=17)
+            self.arrow((x+42,y+42), d, COLORS[d], 36, 6)
+        self.text('每一次移除，都打开新的可能。', (796,601), 17, MUTED, True)
+        if self.game.progress.message:
+            self.text(self.game.progress.message, (64, 706), 17, '#B95D43')
+
+    def draw_selection(self):
         self.text('ARROW / SELECT', (64, 39), 16, GREEN)
-        self.text('一箭又一箭', (60, 82), 49)
+        self.text('选择关卡', (60, 82), 49)
         self.text('选择关卡，挑战更好的自己。', (64, 158), 21, MUTED)
         self.text('每关 35 秒 · A ≤15秒 / B ≤25秒 / C ≤35秒', (64, 213), 19, GREEN)
         self.text('前一关达到 A 或 B，即可永久解锁下一关。', (64, 248), 19, MUTED)
@@ -117,7 +140,7 @@ class App:
                 self.text(f'需要第 {i} 关获得 A 或 B', (x+23, 471), 16, MUTED)
                 self.panel((x+23, 517, 244, 48), '#DADFD5', radius=12)
                 self.text('未解锁', (x+145, 541), 19, MUTED, True)
-        self.button('start', '从第一关开始', (64, 628, 240, 51))
+        self.button('menu', '返回首页', (64, 628, 240, 51))
         self.text('已解锁关卡始终可选，较低成绩不会覆盖最佳成绩。', (333, 642), 17, MUTED)
         if self.game.progress.message:
             self.text(self.game.progress.message, (64, 706), 17, '#B95D43')
@@ -211,7 +234,7 @@ class App:
         label='下一关' if state=='LEVEL_CLEAR' and self.game.grade in ('A','B') else '再次挑战' if won else '重新挑战'
         self.button('continue',label,(305,432,138,55),True)
         self.button('restart','重试本关',(451,432,138,55))
-        self.button('menu','首页选关',(597,432,138,55))
+        self.button('select','选择关卡',(597,432,138,55))
         if self.game.progress.message:
             self.text(self.game.progress.message, (520,517), 15, '#B95D43', True)
 
@@ -219,6 +242,7 @@ class App:
         self.screen.fill(BG)
         self.buttons.clear()
         if self.game.state=='MENU': self.draw_menu()
+        elif self.game.state=='SELECT': self.draw_selection()
         elif self.game.state=='PLAYING': self.draw_playing()
         else: self.draw_result()
         pygame.display.flip()
@@ -226,6 +250,9 @@ class App:
     def action(self, key):
         g=self.game
         if key=='start': self.start()
+        elif key=='select':
+            g.menu()
+            g.state='SELECT'
         elif key.startswith('level_'):
             self.start(int(key.split('_')[1]))
         elif key=='menu': g.menu()
