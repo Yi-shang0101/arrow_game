@@ -8,7 +8,7 @@
 | 作业 | 2026 秋软件工程个人作业（第二次） |
 | 作业要求链接 | 【待补充老师布置本次作业的具体链接】 |
 | 学号 | 102401115 |
-| GitHub 仓库 | 【待填写自己的 GitHub 仓库链接】 |
+| GitHub 仓库 | https://github.com/Yi-shang0101/arrow_game |
 | 开发工具 | Python、Pygame-ce、ChatGPT/Codex |
 
 > 本文是提交前草稿。GitHub 链接、PSP 实际时间、Windows 实机试玩结果和个人心得中的主观内容，需要根据本人实际情况补充，不能直接把“待填写”当作最终答案。
