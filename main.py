@@ -78,9 +78,9 @@ class AudioManager:
     EFFECTS = {
         'countdown': '倒计时.wav',
         'failure': '游戏失败.wav',
-        'failure_1': '游戏失败1.wav',
-        'failure_2': '游戏失败2.wav',
-        'failure_3': '游戏失败3.wav',
+        'failure_1': '游戏失败.wav',
+        'failure_2': '游戏失败.wav',
+        'failure_3': '游戏失败.wav',
         'success': '游戏成功.wav',
         'blocked': '箭头被阻挡.wav',
         'fly': '箭头飞出.wav',
