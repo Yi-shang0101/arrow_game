@@ -1,0 +1,18 @@
+test_T01_exit_commit_after_animation (test_logic.FlowTests.test_T01_exit_commit_after_animation) ... ok
+test_T02_collision_and_click_lock (test_logic.FlowTests.test_T02_collision_and_click_lock) ... ok
+test_T04_next_and_all_clear (test_logic.FlowTests.test_T04_next_and_all_clear) ... ok
+test_T05_failure_restart (test_logic.FlowTests.test_T05_failure_restart) ... ok
+test_T06_restart_during_animation (test_logic.FlowTests.test_T06_restart_during_animation) ... ok
+test_hint_empty_outside_menu (test_logic.FlowTests.test_hint_empty_outside_menu) ... ok
+test_T03_all_boundaries (test_logic.RuleTests.test_T03_all_boundaries) ... ok
+test_all_levels_solvable_and_four_directions (test_logic.RuleTests.test_all_levels_solvable_and_four_directions) ... ok
+test_deadlock (test_logic.RuleTests.test_deadlock) ... ok
+test_four_directions_distant_blockers (test_logic.RuleTests.test_four_directions_distant_blockers) ... ok
+test_invalid_and_empty (test_logic.RuleTests.test_invalid_and_empty) ... ok
+test_fail_restart_outside_hint_and_home (test_ui.UITests.test_fail_restart_outside_hint_and_home) ... ok
+test_mouse_three_level_playthrough (test_ui.UITests.test_mouse_three_level_playthrough) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 2.266s
+
+OK
