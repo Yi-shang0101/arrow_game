@@ -92,28 +92,43 @@ class App:
         self.geometry()
         self.notice = '点击箭头，让通路逐渐打开。'
 
+    def home_button(self, key, label, y):
+        """首页等宽纵向按钮；悬停时以绿色填充、描边和箭头强调。"""
+        rect = pygame.Rect(WIDTH//2-156, y, 312, 60)
+        self.buttons[key] = rect
+        hover = rect.collidepoint(pygame.mouse.get_pos())
+        if hover:
+            self.panel(rect.inflate(10, 10), '#D5E5D7', radius=19)
+        self.panel(rect, GREEN if hover else '#E5EBE1',
+                   '#205F4B' if hover else '#CFDACD', radius=14)
+        self.text(label, rect.center, 22, 'white' if hover else INK, True)
+        if hover:
+            self.arrow((rect.right-33, rect.centery), 'R', 'white', 18, 3)
+
     def draw_menu(self):
-        self.text('ARROW / HOME', (64, 44), 17, GREEN)
-        self.text('观察方向，找到出口。', (64, 152), 22, MUTED)
-        self.text('一箭又一箭', (60, 194), 64)
-        self.text('一场关于顺序的小小解谜', (64, 293), 24, GREEN)
+        # 装饰直接画在背景上，不使用独立卡片；中间留白保证阅读。
+        motifs = [(116,154,'U',38), (230,273,'R',30), (106,478,'L',46),
+                  (229,625,'D',34), (888,135,'R',44), (805,307,'D',32),
+                  (932,458,'U',42), (835,647,'L',34)]
+        for x,y,d,length in motifs:
+            self.arrow((x,y), d, '#DEE5DA', length, 4)
+        for x,y in [(178,372),(862,535),(270,126),(939,276),(117,649),(774,184)]:
+            pygame.draw.circle(self.screen, '#E0E6DC', (x,y), 3)
+        cx = WIDTH//2
+        self.text('ARROW BY ARROW', (cx,89), 15, GREEN, True)
+        self.text('观察方向，找到出口。', (cx,146), 21, MUTED, True)
+        self.text('一箭又一箭', (cx,221), 64, INK, True)
+        self.text('一场关于顺序的小小解谜', (cx,292), 23, GREEN, True)
         for i, line in enumerate(['点击前方畅通的箭头，让它飞出棋盘。',
                                   '每关限时 35 秒，拥有 3 次失误机会。',
                                   '获得 A 或 B，解锁下一关。']):
-            self.text(line, (66, 365+i*40), 20, MUTED)
-        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (66, 489), 18, GREEN)
-        self.button('start', '开始游戏', (64, 546, 218, 58), True)
-        self.button('select', '选择关卡', (302, 546, 218, 58))
-        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (65, 630), 17, MUTED)
-        self.panel((626, 159, 342, 397), '#E6EBDF', radius=32)
-        demo = [('U',0,0), ('R',0,2), ('L',1,0), ('D',1,1), ('U',1,2), ('R',2,1), ('D',2,2)]
-        for d,r,c in demo:
-            x,y = 657+c*98, 211+r*98
-            self.panel((x,y,84,84), 'white', radius=17)
-            self.arrow((x+42,y+42), d, COLORS[d], 36, 6)
-        self.text('每一次移除，都打开新的可能。', (796,601), 17, MUTED, True)
+            self.text(line, (cx,354+i*34), 19, MUTED, True)
+        self.text('A ≤15秒   /   B ≤25秒   /   C ≤35秒', (cx,463), 17, GREEN, True)
+        self.home_button('start', '开始游戏', 508)
+        self.home_button('select', '选择关卡', 584)
+        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (cx,687), 16, MUTED, True)
         if self.game.progress.message:
-            self.text(self.game.progress.message, (64, 706), 17, '#B95D43')
+            self.text(self.game.progress.message, (cx,730), 16, '#B95D43', True)
 
     def draw_selection(self):
         self.text('ARROW / SELECT', (64, 39), 16, GREEN)

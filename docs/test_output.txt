@@ -31,6 +31,6 @@ test_mouse_three_level_playthrough (test_ui.UITests.test_mouse_three_level_playt
 test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
 
 ----------------------------------------------------------------------
-Ran 31 tests in 2.313s
+Ran 31 tests in 2.520s
 
 OK
