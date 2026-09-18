@@ -28,6 +28,7 @@ class AudioManager:
         'success': '游戏成功.wav',
         'blocked': '箭头被阻挡.wav',
         'fly': '箭头飞出.wav',
+        'button': '点击按钮.wav',
     }
 
     def __init__(self, audio_dir):
@@ -35,11 +36,18 @@ class AudioManager:
         self.enabled = False
         self.current_music = None
         self.countdown_channel = None
+        self.result_channel = None
+        self.countdown_bus = None
+        self.result_bus = None
         self.effects = {}
         try:
             if not pygame.mixer.get_init():
                 pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
             pygame.mixer.set_num_channels(8)
+            # 0/1 专用于倒计时和结果音效，普通按钮音效不会复用这两个通道。
+            pygame.mixer.set_reserved(2)
+            self.countdown_bus = pygame.mixer.Channel(0)
+            self.result_bus = pygame.mixer.Channel(1)
             for key, filename in self.EFFECTS.items():
                 path = self.audio_dir / filename
                 if path.exists():
@@ -51,6 +59,8 @@ class AudioManager:
         except (pygame.error, OSError):
             self.enabled = False
             self.effects.clear()
+            self.countdown_bus = None
+            self.result_bus = None
 
     def play_music(self, key):
         if not self.enabled or key not in self.MUSIC:
@@ -71,15 +81,32 @@ class AudioManager:
     def play_effect(self, key):
         if self.enabled and key in self.effects:
             try:
-                self.effects[key].play()
+                if key in ('success', 'failure') and self.result_bus is not None:
+                    self.result_bus.play(self.effects[key])
+                    self.result_channel = self.result_bus
+                else:
+                    self.effects[key].play()
             except pygame.error:
                 pass
+
+    def stop_result(self):
+        """立即停止通关/失败结果音效，供结果页按钮切换前调用。"""
+        if self.result_channel is not None:
+            try:
+                self.result_channel.stop()
+            except pygame.error:
+                pass
+            self.result_channel = None
 
     def start_countdown(self):
         self.stop_countdown()
         if self.enabled and 'countdown' in self.effects:
             try:
-                self.countdown_channel = self.effects['countdown'].play()
+                if self.countdown_bus is not None:
+                    self.countdown_bus.play(self.effects['countdown'])
+                    self.countdown_channel = self.countdown_bus
+                else:
+                    self.countdown_channel = None
             except pygame.error:
                 self.countdown_channel = None
 
@@ -383,6 +410,8 @@ class App:
 
     def action(self, key):
         g=self.game
+        if key in ('continue', 'restart', 'select', 'menu') and g.state in ('LEVEL_CLEAR', 'ALL_CLEAR', 'GAME_OVER'):
+            self.audio.stop_result()
         if key=='start': self.start()
         elif key=='quit': self.running=False
         elif key=='begin' and g.state=='READY':
@@ -414,6 +443,9 @@ class App:
         elif event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
             for key,rect in self.buttons.items():
                 if rect.collidepoint(event.pos):
+                    if key in ('continue', 'restart', 'select'):
+                        self.audio.stop_result()
+                    self.audio.play_effect('button')
                     self.action(key)
                     return
             if self.game.state=='PLAYING' and self.board_rect.collidepoint(event.pos):

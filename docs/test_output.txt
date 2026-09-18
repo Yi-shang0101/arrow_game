@@ -1,6 +1,8 @@
 test_all_user_audio_assets_are_present (test_audio.AudioTests.test_all_user_audio_assets_are_present) ... ok
-test_effect_methods_are_safe_after_audio_shutdown (test_audio.AudioTests.test_effect_methods_are_safe_after_audio_shutdown) ... ok
+test_button_sound_is_loaded_and_safe (test_audio.AudioTests.test_button_sound_is_loaded_and_safe) ... ok
+test_failure_sound_stops_before_retry_button (test_audio.AudioTests.test_failure_sound_stops_before_retry_button) ... ok
 test_music_and_state_effect_routing (test_audio.AudioTests.test_music_and_state_effect_routing) ... ok
+test_success_sound_stops_before_result_button_action (test_audio.AudioTests.test_success_sound_stops_before_result_button_action) ... ok
 test_T01_exit_commit_after_animation (test_logic.FlowTests.test_T01_exit_commit_after_animation) ... ok
 test_T02_collision_and_click_lock (test_logic.FlowTests.test_T02_collision_and_click_lock) ... ok
 test_T04_next_and_all_clear (test_logic.FlowTests.test_T04_next_and_all_clear) ... ok
@@ -35,6 +37,6 @@ test_ready_screen_waits_for_confirmation (test_ui.UITests.test_ready_screen_wait
 test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_result_restart_and_grade_render) ... ok
 
 ----------------------------------------------------------------------
-Ran 35 tests in 2.766s
+Ran 37 tests in 2.865s
 
 OK
