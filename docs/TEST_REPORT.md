@@ -81,7 +81,7 @@
 
 ## 字体更新
 
-根据用户提供的 Google Fonts 链接，程序现在使用 `assets/MaShanZheng-Regular.ttf`（Ma Shan Zheng）绘制标题，使用 `assets/NotoSerifSC-Regular.ttf`（Noto Serif SC）绘制正文和按钮。缺少资源时依次回退到随包 Noto Sans CJK 和系统中文字体；UI 测试确认两种用户指定字体随包存在且被优先使用。
+根据用户提供的 Google Fonts 链接，程序现在使用 `assets/MaShanZheng-Regular.ttf`（Ma Shan Zheng）绘制主标题，使用 `assets/NotoSerifSC-Regular.ttf`（Noto Serif SC）绘制正文、按钮和含 `·` 分隔符的关卡信息行。这样可避免 Ma Shan Zheng 缺少分隔符字形而出现方框；缺少资源时依次回退到随包 Noto Sans CJK 和系统中文字体。
 
 ## 当前关卡自动求解
 

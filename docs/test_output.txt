@@ -47,6 +47,6 @@ test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_resul
 test_user_font_is_preferred (test_ui.UITests.test_user_font_is_preferred) ... ok
 
 ----------------------------------------------------------------------
-Ran 47 tests in 9.504s
+Ran 47 tests in 9.434s
 
 OK

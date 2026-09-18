@@ -439,7 +439,7 @@ class App:
         rules = level_rules(level)
         self.text('准备好了吗？', (cx,121), 22, GREEN, True, display=True)
         self.text(f'第 {self.game.level_index+1} 关 · {level["name"]} · {rules["label"]}',
-                  (cx,185), 38, INK, True, display=True)
+                  (cx,185), 38, INK, True)
         self.panel((230,249,580,260), 'white', LINE, 24)
         for i, line in enumerate([f'点击前方畅通的箭头，让它飞出棋盘。',
                                   f'本关限时 {rules["time_limit"]:.0f} 秒，拥有 3 次失误机会。',

@@ -113,7 +113,7 @@ AI 修改：每关计时，游戏界面增加用时和倒计时，结果页显�
 
 ## 用户指定字体
 
-用户提供 Google Fonts 的 Ma Shan Zheng 与 Noto Serif SC 引入链接，要求用于游戏界面。AI 下载对应的 `MaShanZheng-Regular.ttf` 和 `NotoSerifSC-Regular.ttf` 并放入 `assets/`，Pygame 启动时标题优先使用 Ma Shan Zheng，正文和按钮使用 Noto Serif SC；资源缺失时回退到随包 Noto Sans CJK，再回退到系统中文字体。字体资源与原有 Noto Sans CJK 一并遵循 `assets/OFL.txt` 中的 SIL Open Font License 1.1。修改后需重新检查中文渲染、按钮宽度和五关界面截图。
+用户提供 Google Fonts 的 Ma Shan Zheng 与 Noto Serif SC 引入链接，要求用于游戏界面。AI 下载对应的 `MaShanZheng-Regular.ttf` 和 `NotoSerifSC-Regular.ttf` 并放入 `assets/`，Pygame 启动时标题优先使用 Ma Shan Zheng，正文和按钮使用 Noto Serif SC；包含 `·` 分隔符的关卡信息行改用 Noto Serif SC 渲染，避免 Ma Shan Zheng 缺少该字形而显示方框。资源缺失时回退到随包 Noto Sans CJK，再回退到系统中文字体。字体资源与原有 Noto Sans CJK 一并遵循 `assets/OFL.txt` 中的 SIL Open Font License 1.1。修改后需重新检查中文渲染、按钮宽度和五关界面截图。
 
 ## 用户指定的字体组合与自动求解
 
