@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import pygame
-from main import App
+from main import App, MENU_MOTIFS
 from logic import EXIT_DURATION, can_exit, solve
 
 out=Path(__file__).resolve().parent
@@ -16,6 +16,12 @@ def capture(name):
     app.draw()
     pygame.image.save(app.screen,str(out/name))
 capture('01_menu.png')
+x, y, _direction, _length = MENU_MOTIFS[0]
+app.pointer_pos = (x, y)
+app.launch_background_arrow(0)
+app.update_background_animation(0.2)
+capture('10_home_hover.png')
+app.background_arrow_flight = None
 app.start(0)
 app.action('begin')
 capture('02_game.png')
@@ -65,4 +71,4 @@ capture('13_settings_day.png')
 app.action('theme_night')
 capture('14_settings_night.png')
 pygame.quit()
-print('Saved 12 screenshots')
+print('Saved 13 screenshots')

@@ -37,6 +37,7 @@ test_third_level_animation_budget_allows_A (test_timer.TimerTests.test_third_lev
 test_timeout_during_exit (test_timer.TimerTests.test_timeout_during_exit) ... ok
 test_timeout_idle_strictly_after_35 (test_timer.TimerTests.test_timeout_idle_strictly_after_35) ... ok
 test_auto_solve_button_finishes_current_level (test_ui.UITests.test_auto_solve_button_finishes_current_level) ... ok
+test_background_arrow_hover_and_launch (test_ui.UITests.test_background_arrow_hover_and_launch) ... ok
 test_fail_restart_outside_hint_and_home (test_ui.UITests.test_fail_restart_outside_hint_and_home) ... ok
 test_home_selection_and_C_retry (test_ui.UITests.test_home_selection_and_C_retry) ... ok
 test_home_selection_back_and_timer_stopped (test_ui.UITests.test_home_selection_back_and_timer_stopped) ... ok
@@ -47,6 +48,6 @@ test_timeout_result_restart_and_grade_render (test_ui.UITests.test_timeout_resul
 test_user_font_is_preferred (test_ui.UITests.test_user_font_is_preferred) ... ok
 
 ----------------------------------------------------------------------
-Ran 47 tests in 9.434s
+Ran 48 tests in 9.507s
 
 OK

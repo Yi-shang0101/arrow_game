@@ -5,7 +5,7 @@ os.environ.setdefault('SDL_AUDIODRIVER','dummy')
 import unittest
 from pathlib import Path
 import pygame
-from main import App
+from main import App, MENU_MOTIFS
 from logic import can_exit, solve
 from levels import LEVELS
 
@@ -180,6 +180,21 @@ class UITests(unittest.TestCase):
                 break
         self.assertEqual(self.app.game.state, 'LEVEL_CLEAR')
         self.assertFalse(self.app.game.auto_solving)
+
+    def test_background_arrow_hover_and_launch(self):
+        x, y, _direction, _length = MENU_MOTIFS[0]
+        self.assertEqual(self.app.background_motif_at((x, y)), 0)
+        self.assertIsNone(self.app.background_motif_at((520, 120)))
+        self.app.pointer_pos = (x, y)
+        self.app.draw()
+        self.app.handle_event(pygame.event.Event(
+            pygame.MOUSEBUTTONDOWN, button=1, pos=(x, y)))
+        self.assertEqual(self.app.game.state, 'MENU')
+        self.assertEqual(self.app.background_arrow_flight[0], 0)
+        self.app.update_background_animation(0.3)
+        self.assertIsNotNone(self.app.background_arrow_flight)
+        self.app.update_background_animation(0.3)
+        self.assertIsNone(self.app.background_arrow_flight)
 
     def test_ready_screen_waits_for_confirmation(self):
         self.assertGreater(self.app.buttons['start'].width,self.app.buttons['select'].width)

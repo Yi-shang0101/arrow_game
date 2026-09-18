@@ -65,6 +65,11 @@ THEMES = {
     },
 }
 THEME_OPTIONS = (('day', '白天模式'), ('eye', '护眼模式'), ('night', '夜间模式'))
+MENU_MOTIFS = (
+    (116, 154, 'U', 38), (230, 273, 'R', 30), (106, 478, 'L', 46),
+    (229, 625, 'D', 34), (888, 135, 'R', 44), (805, 307, 'D', 32),
+    (932, 458, 'U', 42), (835, 647, 'L', 34),
+)
 
 
 class AudioManager:
@@ -252,6 +257,8 @@ class App:
         self.sliders = {}
         self.dragging_slider = None
         self.theme_mode = 'day'
+        self.pointer_pos = pygame.mouse.get_pos()
+        self.background_arrow_flight = None
         self.board_rect = pygame.Rect(64, 190, 540, 480)
         self.cell = 80
         self.notice = '点击箭头，让通路逐渐打开。'
@@ -394,13 +401,48 @@ class App:
         if hover:
             self.arrow((rect.right-33, rect.centery), 'R', 'white', 18, 3)
 
+    def background_motif_at(self, pos):
+        """返回鼠标命中的首页背景箭头编号；命中区比线条略宽，便于操作。"""
+        px, py = pos
+        for index, (x, y, _direction, length) in enumerate(MENU_MOTIFS):
+            radius = max(22, length * 0.62)
+            if (px - x) ** 2 + (py - y) ** 2 <= radius ** 2:
+                return index
+        return None
+
+    def launch_background_arrow(self, index):
+        """启动首页背景箭头的装饰性飞行动画。"""
+        if not 0 <= index < len(MENU_MOTIFS):
+            return False
+        self.background_arrow_flight = [index, 0.0]
+        return True
+
+    def update_background_animation(self, dt):
+        """更新首页背景箭头动画；不占用关卡计时。"""
+        if self.background_arrow_flight is None:
+            return
+        index, progress = self.background_arrow_flight
+        progress += max(0.0, dt) / 0.55
+        self.background_arrow_flight = None if progress >= 1.0 else [index, progress]
+
     def draw_menu(self):
         # 装饰直接画在背景上，不使用独立卡片；中间留白保证阅读。
-        motifs = [(116,154,'U',38), (230,273,'R',30), (106,478,'L',46),
-                  (229,625,'D',34), (888,135,'R',44), (805,307,'D',32),
-                  (932,458,'U',42), (835,647,'L',34)]
-        for x,y,d,length in motifs:
-            self.arrow((x,y), d, '#92B49D', length, 5)
+        hover_index = self.background_motif_at(self.pointer_pos)
+        flight = self.background_arrow_flight
+        flight_index = flight[0] if flight else None
+        flight_progress = flight[1] if flight else 0.0
+        for index, (x, y, d, length) in enumerate(MENU_MOTIFS):
+            active = index in (hover_index, flight_index)
+            color = THEMES[self.theme_mode]['green'] if active else '#92B49D'
+            if active:
+                self.arrow((x, y), d, color, length + 6, 7)
+            else:
+                self.arrow((x, y), d, color, length, 5)
+            if index == flight_index:
+                dr, dc = DIRECTIONS[d]
+                offset = (length + 76) * flight_progress
+                self.arrow((x + dc * offset, y + dr * offset), d,
+                           color, max(18, length * 0.65), 5)
         for x,y in [(178,372),(862,535),(270,126),(939,276),(117,649),(774,184)]:
             pygame.draw.circle(self.screen, self.theme_color('#B2C7AF'), (x,y), 4)
         cx = WIDTH//2
@@ -412,7 +454,8 @@ class App:
         self.home_button('select', '选择关卡', 432)
         self.home_button('settings', '设置', 501)
         self.home_button('quit', '退出游戏', 570)
-        self.text('从第一关开始，或选择已解锁关卡刷新成绩。', (cx,690), 16, MUTED, True)
+        self.text('从第一关开始，或选择已解锁关卡；背景箭头可悬停高亮并点击发射。',
+                  (cx,690), 15, MUTED, True)
         if self.game.progress.message:
             self.text(self.game.progress.message, (cx,730), 16, '#B95D43', True)
 
@@ -663,6 +706,8 @@ class App:
             elif g.state in ('LEVEL_CLEAR','ALL_CLEAR','GAME_OVER'): self.start(g.level_index)
 
     def handle_event(self,event):
+        if hasattr(event, 'pos'):
+            self.pointer_pos = event.pos
         if event.type==pygame.QUIT:
             self.action('quit')
         elif event.type==pygame.KEYDOWN:
@@ -697,6 +742,11 @@ class App:
                 elif result=='exit':
                     self.audio.play_effect('fly')
                     self.notice='通路畅通，箭头飞出！'
+            elif self.game.state == 'MENU':
+                motif = self.background_motif_at(event.pos)
+                if motif is not None:
+                    self.audio.play_effect('fly')
+                    self.launch_background_arrow(motif)
         elif event.type==pygame.MOUSEMOTION and self.dragging_slider:
             if event.buttons[0]:
                 self.set_slider_value(self.dragging_slider, event.pos[0])
@@ -717,6 +767,7 @@ class App:
                 continue
             # 不截断 dt：低帧率、窗口拖动等期间也必须累计实际经过时间。
             dt=self.clock.tick(60)/1000
+            self.update_background_animation(dt)
             self.game.update(dt)
             if self.game.auto_step_started:
                 self.audio.play_effect('fly')
