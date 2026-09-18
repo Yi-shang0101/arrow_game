@@ -4,6 +4,7 @@ os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import pygame
 from main import App, AudioManager
 
@@ -23,7 +24,8 @@ class AudioTests(unittest.TestCase):
         self.assertTrue(expected)
         self.assertTrue(all((audio_dir / name).is_file() for name in expected))
         self.assertEqual(set(AudioManager.EFFECTS),
-                         {'countdown', 'failure', 'success', 'blocked', 'fly', 'button'})
+                         {'countdown', 'failure', 'failure_1', 'failure_2', 'failure_3',
+                          'success', 'blocked', 'fly', 'button'})
 
     def test_music_and_state_effect_routing(self):
         self.assertTrue(self.app.audio.enabled)
@@ -53,6 +55,48 @@ class AudioTests(unittest.TestCase):
         self.assertIsNone(self.app.audio.result_channel)
         self.assertFalse(channel.get_busy())
         self.assertEqual(self.app.game.state, 'READY')
+
+    def test_failure_sound_randomly_uses_all_four_variants(self):
+        seen_candidates = []
+
+        def choose(candidates):
+            seen_candidates.append(tuple(candidates))
+            return 'failure_2'
+
+        with patch('main.random.choice', side_effect=choose):
+            self.app.audio.play_failure()
+        self.assertEqual(seen_candidates, [AudioManager.FAILURE_KEYS])
+        self.assertEqual(self.app.audio.last_failure_key, 'failure_2')
+        self.assertTrue(self.app.audio.result_channel.get_busy())
+        self.app.audio.stop_result()
+
+    def test_result_pages_have_home_button_and_stop_result_sound(self):
+        for state in ('LEVEL_CLEAR', 'GAME_OVER'):
+            self.app.game.state = state
+            self.app.game.failure_reason = 'mistakes'
+            self.app.draw()
+            self.assertIn('menu', self.app.buttons)
+            channel = self.app.audio.result_channel
+            self.assertIsNotNone(channel)
+            self.app.handle_event(pygame.event.Event(
+                pygame.MOUSEBUTTONDOWN, button=1, pos=self.app.buttons['menu'].center))
+            self.assertEqual(self.app.game.state, 'MENU')
+            self.assertFalse(channel.get_busy())
+
+    def test_quit_plays_one_of_the_new_failure_sounds(self):
+        seen_candidates = []
+
+        def choose(candidates):
+            seen_candidates.append(tuple(candidates))
+            return 'failure_1'
+
+        with patch('main.random.choice', side_effect=choose):
+            self.app.action('quit')
+        self.assertTrue(self.app.quit_requested)
+        self.assertEqual(seen_candidates, [AudioManager.NEW_FAILURE_KEYS])
+        self.assertEqual(self.app.audio.last_failure_key, 'failure_1')
+        self.assertTrue(self.app.running)
+        self.app.audio.stop_result()
 
     def test_failure_sound_stops_before_retry_button(self):
         self.app.game.state = 'GAME_OVER'

@@ -1,6 +1,7 @@
 """一箭又一箭：Pygame 界面。运行 python main.py。"""
 import math
 import os
+import random
 from pathlib import Path
 
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
@@ -25,11 +26,16 @@ class AudioManager:
     EFFECTS = {
         'countdown': '倒计时.wav',
         'failure': '游戏失败.wav',
+        'failure_1': '游戏失败1.wav',
+        'failure_2': '游戏失败2.wav',
+        'failure_3': '游戏失败3.wav',
         'success': '游戏成功.wav',
         'blocked': '箭头被阻挡.wav',
         'fly': '箭头飞出.wav',
         'button': '点击按钮.wav',
     }
+    FAILURE_KEYS = ('failure', 'failure_1', 'failure_2', 'failure_3')
+    NEW_FAILURE_KEYS = ('failure_1', 'failure_2', 'failure_3')
 
     def __init__(self, audio_dir):
         self.audio_dir = Path(audio_dir)
@@ -40,6 +46,7 @@ class AudioManager:
         self.countdown_bus = None
         self.result_bus = None
         self.effects = {}
+        self.last_failure_key = None
         try:
             if not pygame.mixer.get_init():
                 pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
@@ -81,13 +88,21 @@ class AudioManager:
     def play_effect(self, key):
         if self.enabled and key in self.effects:
             try:
-                if key in ('success', 'failure') and self.result_bus is not None:
+                if (key == 'success' or key in self.FAILURE_KEYS) and self.result_bus is not None:
                     self.result_bus.play(self.effects[key])
                     self.result_channel = self.result_bus
                 else:
                     self.effects[key].play()
             except pygame.error:
                 pass
+
+    def play_failure(self, new_only=False):
+        """随机播放失败音效；退出游戏时只从本次新增的三条中选择。"""
+        candidates = self.NEW_FAILURE_KEYS if new_only else self.FAILURE_KEYS
+        key = random.choice(candidates)
+        self.last_failure_key = key
+        self.play_effect(key)
+        return self.result_channel
 
     def stop_result(self):
         """立即停止通关/失败结果音效，供结果页按钮切换前调用。"""
@@ -138,6 +153,9 @@ class App:
         self.audio = AudioManager(ROOT / 'assets' / 'audio')
         self._audio_state = None
         self.running = True
+        self.quit_requested = False
+        self.quit_channel = None
+        self.quit_deadline = 0
         font_file = ROOT / 'assets' / 'NotoSansCJKsc-Regular.otf'
         self.font_path = str(font_file) if font_file.exists() else pygame.font.match_font(
             'microsoftyahei,simhei,pingfangsc,notosanscjksc,wenquanyizenhei')
@@ -166,7 +184,7 @@ class App:
             self.audio.play_music('menu')
         elif state == 'GAME_OVER':
             self.audio.stop_countdown()
-            self.audio.play_effect('failure')
+            self.audio.play_failure()
             self.audio.play_music('menu')
 
     def font(self, size):
@@ -379,7 +397,7 @@ class App:
         shade.fill((28,48,41,145))
         self.screen.blit(shade,(0,0))
         self.buttons.clear()
-        self.panel((280,198,480,354),'#FAFBF6',radius=28)
+        self.panel((280,180,480,395),'#FAFBF6',radius=28)
         state=self.game.state
         won=state!='GAME_OVER'
         title={'LEVEL_CLEAR':'通路已打开！','ALL_CLEAR':'全部通关！','GAME_OVER':'再观察一次吧'}[state]
@@ -395,8 +413,9 @@ class App:
         self.button('continue',label,(305,432,138,55),True)
         self.button('restart','重试本关',(451,432,138,55))
         self.button('select','选择关卡',(597,432,138,55))
+        self.button('menu','返回首页',(451,502,138,50))
         if self.game.progress.message:
-            self.text(self.game.progress.message, (520,517), 15, '#B95D43', True)
+            self.text(self.game.progress.message, (520,570), 15, '#B95D43', True)
 
     def draw(self):
         self.sync_audio()
@@ -414,7 +433,19 @@ class App:
         if key in ('continue', 'restart', 'select', 'menu') and g.state in ('LEVEL_CLEAR', 'ALL_CLEAR', 'GAME_OVER'):
             self.audio.stop_result()
         if key=='start': self.start()
-        elif key=='quit': self.running=False
+        elif key=='quit':
+            # 退出前播放一条本次新增的短失败音效，并留出播放时间再关闭窗口。
+            if self.quit_requested:
+                return
+            self.audio.stop_countdown()
+            self.audio.stop_result()
+            self.audio.stop_music()
+            self.quit_channel = self.audio.play_failure(new_only=True)
+            if self.audio.enabled and self.quit_channel is not None:
+                self.quit_requested = True
+                self.quit_deadline = pygame.time.get_ticks() + 1500
+            else:
+                self.running = False
         elif key=='begin' and g.state=='READY':
             g.state='PLAYING'
             self.clock.tick()  # 清除说明页的帧间隔，计时从确认后开始。
@@ -434,7 +465,7 @@ class App:
 
     def handle_event(self,event):
         if event.type==pygame.QUIT:
-            self.running=False
+            self.action('quit')
         elif event.type==pygame.KEYDOWN:
             if event.key==pygame.K_ESCAPE: self.game.menu()
             elif event.key==pygame.K_r and self.game.state=='PLAYING': self.action('restart')
@@ -444,7 +475,7 @@ class App:
         elif event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
             for key,rect in self.buttons.items():
                 if rect.collidepoint(event.pos):
-                    if key in ('continue', 'restart', 'select'):
+                    if key in ('continue', 'restart', 'select', 'menu'):
                         self.audio.stop_result()
                     self.audio.play_effect('button')
                     self.action(key)
@@ -463,6 +494,15 @@ class App:
     def run(self):
         self.draw()
         while self.running:
+            if self.quit_requested:
+                if (self.quit_channel is None or not self.quit_channel.get_busy() or
+                        pygame.time.get_ticks() >= self.quit_deadline):
+                    self.running = False
+                    break
+                # 退出时只维持事件泵和音效，不再推进游戏逻辑或重绘页面。
+                pygame.event.pump()
+                self.clock.tick(60)
+                continue
             # 不截断 dt：低帧率、窗口拖动等期间也必须累计实际经过时间。
             dt=self.clock.tick(60)/1000
             self.game.update(dt)
@@ -470,8 +510,11 @@ class App:
             for event in pygame.event.get():
                 self.handle_event(event)
                 # 同一帧内状态变化后，立即更新按钮集合，避免旧按钮响应。
-                if event.type in (pygame.KEYDOWN,pygame.MOUSEBUTTONDOWN): self.draw()
-            self.draw()
+                if (event.type in (pygame.KEYDOWN,pygame.MOUSEBUTTONDOWN)
+                        and not self.quit_requested):
+                    self.draw()
+            if not self.quit_requested:
+                self.draw()
         pygame.quit()
 
 
