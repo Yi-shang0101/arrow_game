@@ -136,46 +136,10 @@ python -m unittest discover -s tests -v
 
 重新生成截图：`python docs/capture_demo.py`。
 
-## AIGC、提交记录与课程材料
-
-本项目由 ChatGPT / Codex 辅助生成、调试和验证。真实阶段记录见 `docs/DEVELOPMENT.md`，未虚构学生的人工修改、试玩或耗时。提交前请阅读代码，补充自己的实际运行结果与 PSP 耗时。
-
-`history/development.bundle` 仅用于课程提交或本地历史备份，已通过 `.gitignore` 排除，不属于 GitHub 源码仓库内容。GitHub 用户可以直接获取源码：
-
-```sh
-git clone https://github.com/Yi-shang0101/arrow_game.git
-```
-
-项目源码位于 `main` 分支，Windows 可执行版本发布在 [GitHub Releases](https://github.com/Yi-shang0101/arrow_game/releases)。当前版本为 `v1.0.0`；后续修复和功能更新使用新的版本标签发布，例如 `v1.0.1` 或 `v1.1.0`。
-
 ## 资源来源
 
-箭头、布局与界面图形由代码绘制，无原商业游戏素材。游戏界面使用用户提供的 Google Fonts 组合：标题使用 [Ma Shan Zheng](https://fonts.google.com/specimen/Ma+Shan+Zheng)（马善政体），正文和按钮使用 Noto Serif SC；对应文件为 `assets/MaShanZheng-Regular.ttf` 与 `assets/NotoSerifSC-Regular.ttf`。若资源缺失，则回退到随包的 `NotoSansCJKsc-Regular.otf` 或系统中文字体。字体按 SIL Open Font License 1.1 分发，许可证随包保留在 `assets/OFL.txt`。网页引入地址为：`https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@200..900&display=swap`。
+箭头、布局与界面图形由代码绘制，无原商业游戏素材。游戏界面使用 Google Fonts 组合：标题使用 [Ma Shan Zheng](https://fonts.google.com/specimen/Ma+Shan+Zheng)（马善政体），正文和按钮使用 Noto Serif SC；对应文件为 `assets/MaShanZheng-Regular.ttf` 与 `assets/NotoSerifSC-Regular.ttf`。游戏音效来自于https://mixkit.co/ ，无商业素材。
 
-首页不再显示详细规则，玩法、按难度限时与 ABC 评级统一放在关卡开始前的说明页。初次进入、选关、下一关及重试都先进入说明页；阅读期间不计时，也不接受棋盘点击。
 
-首页在“选择关卡”与“退出游戏”之间提供“设置”，四个入口沿用统一的居中布局和悬停逻辑；设置页可调节两类音量并切换显示主题。退出游戏会播放一条新失败音效后正常结束主循环并关闭窗口。
 
-游戏页提供“提示 H”和“自动求解 A”。自动求解会调用当前棋盘求解器，按正常飞出动画和计时逐步完成当前关卡；执行期间锁定手动棋盘点击，但仍可返回首页或重新开始。首页背景箭头支持鼠标悬停高亮，点击后会沿箭头方向播放飞出动画，不影响菜单按钮和关卡计时。
 
-## 音乐与音效
-
-`assets/audio/` 内置本次提供的 11 个音频文件：
-
-| 文件 | 使用场景 |
-| --- | --- |
-| `主菜单音乐.mp3` | 首页、选关页和规则说明页循环播放 |
-| `进行游戏音乐.mp3` | 点击“开始挑战”后循环播放 |
-| `倒计时.wav` | 每次开始挑战时播放，并在通关、失败、返回或重开时停止 |
-| `箭头飞出.wav` | 点击畅通箭头时播放 |
-| `箭头被阻挡.wav` | 点击被阻挡箭头时播放 |
-| `游戏成功.wav` | 关卡通关时播放 |
-| `游戏失败.wav` | 失败音效候选之一；失误耗尽或超时失败时随机播放 |
-| `游戏失败1.wav` | 新增失败音效候选；失败页随机播放，退出游戏时也可能播放 |
-| `游戏失败2.wav` | 新增失败音效候选；失败页随机播放，退出游戏时也可能播放 |
-| `游戏失败3.wav` | 新增失败音效候选；失败页随机播放，退出游戏时也可能播放 |
-| `点击按钮.wav` | 点击任意界面按钮时播放 |
-
-音频文件由用户提供并随项目打包；程序启动时自动加载。设置页的音效和音乐滑块范围均为 0%—100%，修改立即作用于当前运行。失败页从四条失败音效中随机选择；点击“下一关”“重试本关”“选择关卡”或“返回首页”时，当前成功/失败结果音效立即停止。点击首页“退出游戏”时从新增加的三条失败音效中随机播放一条，播放完成（最多等待 1.5 秒）后关闭窗口。若电脑没有可用音频设备，游戏会自动静音但仍可正常运行。
-
-规则说明页同时提供“返回选关”和“返回首页”两个按钮，分别返回选关页面和首页；两者均会播放按钮音效，说明页期间不计时。
